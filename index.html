@@ -152,6 +152,9 @@ function boot(){
     $('dept').innerHTML = '<option value="">— เลือกภาควิชา —</option>' + b.depts.map(function(d){return '<option>'+esc(d)+'</option>';}).join('');
     if (b.lastDept) $('dept').value = b.lastDept;
     var t = new Date(); $('week').value = t.getFullYear()+'-'+('0'+(t.getMonth()+1)).slice(-2)+'-'+('0'+t.getDate()).slice(-2);
+    var q = new URLSearchParams(location.search);
+    if (q.get('dept') && b.depts.indexOf(q.get('dept')) >= 0) $('dept').value = q.get('dept');
+    if (/^\d{4}-\d{2}-\d{2}$/.test(q.get('week') || '')) $('week').value = q.get('week');
     $('micHint').textContent = micOk ? 'กด 🎤 แล้วพูดความเห็น ระบบจะแปลงเป็นข้อความให้ (กดอีกครั้งเพื่อหยุด และตรวจทานก่อนส่ง)'
                                      : 'เบราว์เซอร์นี้ไม่รองรับปุ่ม 🎤 — แตะช่องความเห็นแล้วกดไมค์บนคีย์บอร์ดมือถือเพื่อพูดแทนพิมพ์';
   }).catch(function(e){
