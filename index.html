@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="th"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>ประเมินพฤติกรรมนักเรียนรายสัปดาห์</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2316466e'/%3E%3Cpath d='M18 33l9 9 19-20' stroke='white' stroke-width='7' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<style>
+:root{--bg:#f4f6f9;--card:#fff;--ink:#1d2733;--muted:#5d6b7a;--line:#dde3ea;--brand:#16466e;--brand2:#1f6aa5;
+--s0:#1a7f5a;--s1:#5d6b7a;--s2:#b7791f;--s3:#c2410c;--s4:#b42318}
+*{box-sizing:border-box}body{margin:0;font-family:"Sarabun","Noto Sans Thai",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:16px}
+header{background:var(--brand);color:#fff;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+header h1{font-size:18px;margin:0}header .who{font-size:13px;opacity:.85;margin-top:2px;word-break:break-all}
+header a{color:#fff;font-size:13px;opacity:.85;white-space:nowrap}
+main{max-width:900px;margin:0 auto;padding:12px 16px 120px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:12px}
+label{display:block;font-size:13px;color:var(--muted);margin:8px 0 4px}
+select,input[type=date],textarea{width:100%;font:inherit;padding:10px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media(max-width:560px){.row2{grid-template-columns:1fr}}
+button{font:inherit;border:0;border-radius:8px;padding:10px 16px;cursor:pointer}
+.primary{background:var(--brand2);color:#fff}.primary:disabled{opacity:.5}
+.ghost{background:#eef2f6;color:var(--ink)}
+.stu{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px}
+.stu.flag{border-color:#f0b37e;background:#fffaf4}
+.stu .top{display:flex;justify-content:space-between;gap:8px;align-items:baseline;flex-wrap:wrap}
+.stu .name{font-weight:600}.stu .id{color:var(--muted);font-size:13px}
+.seg{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 8px}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg label{margin:0;border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:14px;color:var(--ink);cursor:pointer;background:#fff}
+.seg input:checked+label{color:#fff;border-color:transparent}
+.seg input:focus-visible+label{outline:2px solid var(--brand2);outline-offset:2px}
+.seg .o0:checked+label{background:var(--s0)}.seg .o1:checked+label{background:var(--s1)}.seg .o2:checked+label{background:var(--s2)}
+.seg .o3:checked+label{background:var(--s3)}.seg .o4:checked+label{background:var(--s4)}
+.cm{display:flex;gap:8px;align-items:flex-start}.cm textarea{min-height:44px;resize:vertical}
+.mic{background:#eef2f6;width:46px;height:46px;padding:0;font-size:20px;flex:none}.mic.on{background:#fde2e1;animation:p 1s infinite}
+@keyframes p{50%{opacity:.6}}
+.hint{font-size:13px;color:var(--muted)}.err{color:var(--s4);font-size:13px}
+.bar{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);padding:10px 16px}
+.bar .in{max-width:900px;margin:0 auto;display:flex;gap:10px;align-items:center;justify-content:space-between}
+.counts{font-size:13px;color:var(--muted)}
+.ok{background:#e7f6ef;border-color:#b5e2cc}.warn{background:#fff7e6;border-color:#f3d19c}
+.hidden{display:none!important}
+#gbtn{min-height:44px;margin:12px 0}
+.overlay{position:fixed;inset:0;background:rgba(20,30,45,.45);display:flex;align-items:center;justify-content:center;padding:16px;z-index:10}
+.overlay .panel{max-width:420px;width:100%}
+</style></head>
+<body>
+<header><div><h1>ประเมินพฤติกรรมนักเรียนรายสัปดาห์</h1><div class="who" id="who"></div></div><a href="#" id="signout" class="hidden">ออกจากระบบ</a></header>
+<main>
+<div id="inapp" class="panel warn hidden">
+  <b>กรุณาเปิดหน้านี้ใน Chrome หรือ Safari</b>
+  <p class="hint" style="margin:6px 0 10px">แอปนี้ (เช่น LINE, Facebook) ไม่อนุญาตให้เข้าสู่ระบบด้วย Google — กดเมนู ⋮ หรือ ⋯ แล้วเลือก "เปิดในเบราว์เซอร์" หรือคัดลอกลิงก์ไปเปิดเอง</p>
+  <button class="ghost" id="copyLink">คัดลอกลิงก์</button> <span class="hint" id="copyMsg"></span>
+</div>
+<div id="login" class="panel hidden">
+  <p style="margin-top:0">เข้าสู่ระบบด้วยบัญชี Google ที่แจ้งไว้กับผู้ดูแลระบบ ครั้งต่อไปเครื่องนี้จะจำไว้ให้</p>
+  <div id="gbtn"></div>
+  <div id="loginMsg" class="hint"></div>
+</div>
+<div id="app" class="hidden">
+  <div class="panel">
+    <div class="row2">
+      <div><label for="dept">ภาควิชา *</label><select id="dept"></select></div>
+      <div><label for="week">สัปดาห์ที่ประเมิน (เลือกวันใดก็ได้ในสัปดาห์นั้น) *</label><input type="date" id="week"></div>
+    </div>
+    <label for="yr">ชั้นปี (ใช้เมื่อยังไม่มีตารางหมุนเวียน)</label>
+    <select id="yr"><option value="">ใช้ตารางหมุนเวียน</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option></select>
+    <p><button class="primary" id="load">แสดงรายชื่อ</button> <span id="loadMsg" class="hint" role="status"></span></p>
+    <div class="hint" id="micHint"></div>
+  </div>
+  <div id="list"></div>
+</div>
+<div id="done" class="panel ok hidden"></div>
+</main>
+<div class="bar hidden" id="bar"><div class="in"><div class="counts" id="counts"></div><button class="primary" id="submit">ส่งการประเมิน</button></div></div>
+<div class="overlay hidden" id="reauth"><div class="panel"><b>กรุณาเข้าสู่ระบบอีกครั้ง</b>
+  <p class="hint">การเข้าสู่ระบบหมดอายุ ข้อมูลที่กรอกไว้ยังอยู่ครบ เข้าสู่ระบบแล้วระบบจะทำต่อให้อัตโนมัติ</p><div id="gbtn2"></div></div></div>
+<script>
+var CONFIG = {
+  CLIENT_ID: '731005120812-6qqtlt9a6sudckuuk8u2jpg13idm48ml.apps.googleusercontent.com',
+  API: 'https://script.google.com/macros/s/AKfycbymoO1Kn9Hr53CLhyyEBKtPe38WB0OBqwYRWqH7GLsvUCWec26g3za3B3ww8gDiF_C6/exec'
+};
+var ST = ['โดดเด่น','ปกติ','ติดตาม','เฝ้าระวัง','ไม่จบรายวิชา'], NEEDC = {'ติดตาม':1,'เฝ้าระวัง':1,'ไม่จบรายวิชา':1};
+var $ = function(id){return document.getElementById(id);};
+var students = [], ctx = null, idToken = '', pending = null, booted = false;
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+var SR = window.SpeechRecognition || window.webkitSpeechRecognition, micOk = !!SR;
+
+/* ---------- เปิดจากแอป LINE / Facebook ---------- */
+var UA = navigator.userAgent || '';
+(function(){
+  if (/\bLine\//i.test(UA) && !/[?&]openExternalBrowser=1/.test(location.search)) {
+    location.replace(location.href.split('#')[0] + (location.search ? '&' : '?') + 'openExternalBrowser=1'); return;
+  }
+  if (/FBAN|FBAV|FB_IAB|Instagram|\bLine\/|MicroMessenger|; wv\)/i.test(UA)) $('inapp').classList.remove('hidden');
+})();
+$('copyLink').onclick = function(){
+  var u = location.href.split('?')[0];
+  (navigator.clipboard ? navigator.clipboard.writeText(u) : Promise.reject()).then(function(){ $('copyMsg').textContent='คัดลอกแล้ว'; },
+    function(){ prompt('คัดลอกลิงก์นี้', u); });
+};
+
+/* ---------- Sign in with Google ---------- */
+function onCred(resp){
+  idToken = resp.credential;
+  $('reauth').classList.add('hidden');
+  if (pending) { var p = pending; pending = null; p(); }
+  else if (!booted) boot();
+}
+window.onGoogleLibraryLoad = function(){
+  google.accounts.id.initialize({ client_id: CONFIG.CLIENT_ID, callback: onCred, auto_select: true,
+    cancel_on_tap_outside: false, use_fedcm_for_prompt: true, itp_support: true });
+  var opt = { theme:'filled_blue', size:'large', text:'signin_with', shape:'pill', locale:'th', width: 280 };
+  google.accounts.id.renderButton($('gbtn'), opt);
+  google.accounts.id.renderButton($('gbtn2'), opt);
+  $('login').classList.remove('hidden');
+  google.accounts.id.prompt();
+};
+$('signout').onclick = function(e){
+  e.preventDefault(); try { google.accounts.id.disableAutoSelect(); } catch(_){}
+  location.href = location.href.split('?')[0];
+};
+function needLogin(retry, msg){
+  idToken = '';
+  if (!booted) { $('login').classList.remove('hidden'); $('loginMsg').textContent = msg || ''; return; }
+  pending = retry; $('reauth').classList.remove('hidden');
+  try { google.accounts.id.prompt(); } catch(_){}
+}
+
+/* ---------- เรียกระบบหลังบ้าน ---------- */
+function api(action, data, retry){
+  var body = JSON.stringify(Object.assign({ action: action, idToken: idToken }, data || {}));
+  return fetch(CONFIG.API, { method: 'POST', body: body, redirect: 'follow' })
+    .then(function(r){ return r.json(); }, function(){ throw new Error('เชื่อมต่อไม่ได้ กรุณาตรวจอินเทอร์เน็ตแล้วลองใหม่'); })
+    .then(function(r){
+      if (r.ok) return r.data;
+      var e = new Error(r.error || 'เกิดข้อผิดพลาด'); e.code = r.code; throw e;
+    })
+    .catch(function(e){
+      if (e.code === 'AUTH' && retry) { needLogin(retry, e.message); e.handled = true; }
+      throw e;
+    });
+}
+
+function boot(){
+  $('loginMsg').textContent = 'กำลังตรวจสอบสิทธิ์...';
+  api('init', null, boot).then(function(b){
+    booted = true;
+    $('login').classList.add('hidden');
+    $('who').textContent = 'ผู้ประเมิน: ' + (b.name ? b.name + ' · ' : '') + b.email;
+    $('signout').classList.remove('hidden');
+    $('app').classList.remove('hidden');
+    $('dept').innerHTML = '<option value="">— เลือกภาควิชา —</option>' + b.depts.map(function(d){return '<option>'+esc(d)+'</option>';}).join('');
+    if (b.lastDept) $('dept').value = b.lastDept;
+    var t = new Date(); $('week').value = t.getFullYear()+'-'+('0'+(t.getMonth()+1)).slice(-2)+'-'+('0'+t.getDate()).slice(-2);
+    $('micHint').textContent = micOk ? 'กด 🎤 แล้วพูดความเห็น ระบบจะแปลงเป็นข้อความให้ (กดอีกครั้งเพื่อหยุด และตรวจทานก่อนส่ง)'
+                                     : 'เบราว์เซอร์นี้ไม่รองรับปุ่ม 🎤 — แตะช่องความเห็นแล้วกดไมค์บนคีย์บอร์ดมือถือเพื่อพูดแทนพิมพ์';
+  }).catch(function(e){
+    if (e.handled) return;
+    $('loginMsg').innerHTML = esc(e.message) + (e.code === 'DENIED' ? '<br><a href="#" onclick="switchAcct();return false">ใช้บัญชี Google อื่น</a>' : '');
+  });
+}
+function switchAcct(){ try { google.accounts.id.disableAutoSelect(); google.accounts.id.prompt(); } catch(_){} }
+
+$('load').onclick = function loadList(){
+  var d = $('dept').value, w = $('week').value;
+  if(!d || !w){ $('loadMsg').textContent = 'กรุณาเลือกภาควิชาและสัปดาห์'; return; }
+  $('loadMsg').textContent = 'กำลังโหลด...'; $('load').disabled = true;
+  api('roster', { dept: d, week: w, year: $('yr').value }, loadList).then(render)
+    .catch(function(e){ if (!e.handled) $('loadMsg').textContent = e.message; })
+    .then(function(){ $('load').disabled = false; });
+};
+function render(r){
+  if (!r) return;
+  ctx = r; students = r.students;
+  $('loadMsg').textContent = r.note || '';
+  if(!students.length){ $('list').innerHTML = '<div class="panel">ไม่พบรายชื่อนักเรียน กรุณาเลือกชั้นปีด้านบน หรือแจ้งฝ่ายกลางเพิ่มตารางหมุนเวียน</div>'; $('bar').classList.add('hidden'); return; }
+  $('list').innerHTML = '<div class="hint" style="margin:0 2px 8px">สัปดาห์ '+esc(r.weekLabel)+' · '+students.length+' คน · ทุกคนเริ่มที่ "ปกติ" เปลี่ยนเฉพาะคนที่ไม่ปกติ</div>' +
+    students.map(function(s,i){
+      var cur = s.status || 'ปกติ';
+      return '<div class="stu'+(cur!=='ปกติ'?' flag':'')+'" id="c'+i+'"><div class="top"><span class="name">'+esc(s.name)+'</span><span class="id">'+esc(s.id)+' · ปี '+esc(s.year)+'</span></div>'+
+        '<div class="seg" role="radiogroup" aria-label="สถานะ '+esc(s.name)+'">'+ST.map(function(o,k){var id='r'+i+'_'+k;return '<input type="radio" class="o'+k+'" name="s'+i+'" id="'+id+'" value="'+o+'"'+(o===cur?' checked':'')+' onchange="chg('+i+')"><label for="'+id+'">'+o+'</label>';}).join('')+'</div>'+
+        '<div class="cm"><textarea id="t'+i+'" rows="1" aria-label="ความเห็น '+esc(s.name)+'" placeholder="ความเห็น (จำเป็นเมื่อ ติดตาม / เฝ้าระวัง / ไม่จบรายวิชา)">'+esc(s.comment||'')+'</textarea>'+
+        (micOk?'<button type="button" class="mic" id="m'+i+'" onclick="mic('+i+')" aria-label="พูดความเห็น">🎤</button>':'')+'</div><div class="err" id="e'+i+'"></div></div>';
+    }).join('');
+  $('bar').classList.remove('hidden'); counts();
+}
+function val(i){ var x = document.querySelector('input[name=s'+i+']:checked'); return x ? x.value : 'ปกติ'; }
+function chg(i){ $('c'+i).classList.toggle('flag', val(i)!=='ปกติ'); counts(); }
+function counts(){ var c={}; students.forEach(function(s,i){var v=val(i);c[v]=(c[v]||0)+1;}); $('counts').textContent = ST.filter(function(o){return c[o];}).map(function(o){return o+' '+c[o];}).join(' · '); }
+
+/* ---------- พูดแล้วแปลงเป็นข้อความ ---------- */
+var rec = null, recI = -1;
+function mic(i){
+  if(rec){ var was = recI; rec.stop(); if (was === i) return; }
+  var r = new SR(); r.lang = 'th-TH'; r.interimResults = true; r.continuous = true;
+  var ta = $('t'+i), base = ta.value ? ta.value.replace(/\s*$/,' ') : '';
+  r.onresult = function(ev){ var s=''; for(var k=0;k<ev.results.length;k++) s += ev.results[k][0].transcript; ta.value = base + s; };
+  r.onerror = function(ev){ $('e'+i).textContent = ev.error==='not-allowed' || ev.error==='service-not-allowed'
+      ? 'ไม่ได้รับอนุญาตให้ใช้ไมโครโฟน — กดอนุญาตไมโครโฟนที่แถบที่อยู่ หรือกดไมค์บนคีย์บอร์ดแทน'
+      : ev.error==='no-speech' ? 'ไม่ได้ยินเสียง ลองกด 🎤 แล้วพูดอีกครั้ง' : 'บันทึกเสียงไม่สำเร็จ ('+ev.error+')'; };
+  r.onend = function(){ $('m'+i).classList.remove('on'); if (rec === r) { rec = null; recI = -1; } };
+  try { r.start(); rec = r; recI = i; $('m'+i).classList.add('on'); $('e'+i).textContent=''; }
+  catch(e){ $('e'+i).textContent = 'เริ่มบันทึกเสียงไม่ได้: '+e.message; }
+}
+
+/* ---------- ส่ง ---------- */
+$('submit').onclick = function send(){
+  if (rec) rec.stop();
+  var rows = [], bad = 0, first = -1;
+  students.forEach(function(s,i){ var v = val(i), c = $('t'+i).value.trim(); $('e'+i).textContent='';
+    if(NEEDC[v] && !c){ $('e'+i).textContent='กรุณาใส่ความเห็นสำหรับสถานะนี้'; bad++; if (first < 0) first = i; }
+    rows.push({id:s.id, status:v, comment:c}); });
+  if(bad){ $('c'+first).scrollIntoView({behavior:'smooth', block:'center'}); $('counts').textContent = 'มี '+bad+' คนที่ยังไม่ได้ใส่ความเห็น'; return; }
+  $('submit').disabled = true; $('submit').textContent = 'กำลังส่ง...';
+  api('save', { payload: {dept: ctx.dept, week: ctx.week, rows: rows} }, send).then(function(r){
+      $('app').classList.add('hidden'); $('bar').classList.add('hidden');
+      $('done').innerHTML = '<b>ส่งเรียบร้อย ขอบคุณครับ/ค่ะ</b><br>'+esc(r.message)+'<p><button class="ghost" onclick="again()">ประเมินภาควิชา/สัปดาห์อื่น</button></p>';
+      $('done').classList.remove('hidden'); window.scrollTo(0,0);
+    }).catch(function(e){ if (!e.handled) { $('counts').textContent = e.message; } })
+    .then(function(){ $('submit').disabled=false; $('submit').textContent='ส่งการประเมิน'; });
+};
+function again(){ $('done').classList.add('hidden'); $('list').innerHTML=''; $('loadMsg').textContent=''; $('app').classList.remove('hidden'); window.scrollTo(0,0); }
+window.addEventListener('beforeunload', function(e){ if (!$('bar').classList.contains('hidden') && !$('submit').disabled) { e.preventDefault(); e.returnValue=''; } });
+</script>
+<script src="https://accounts.google.com/gsi/client" async></script>
+</body></html>
