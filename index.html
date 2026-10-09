@@ -75,7 +75,7 @@ button{font:inherit;border:0;border-radius:8px;padding:10px 16px;cursor:pointer}
       <div><label for="week">สัปดาห์ที่ประเมิน (เลือกวันใดก็ได้ในสัปดาห์นั้น) *</label><input type="date" id="week"></div>
     </div>
     <label for="yr">ชั้นปี</label>
-    <select id="yr"><option value="">ตามตารางหมุนเวียนของภาควิชา</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option></select>
+    <select id="yr"><option value="" disabled selected hidden>— เลือกชั้นปี —</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option></select>
     <p><button class="primary" id="load">แสดงรายชื่อ</button> <span id="loadMsg" class="hint" role="status"></span></p>
     <div class="hint" id="micHint"></div>
   </div>
@@ -187,29 +187,35 @@ $('load').onclick = function loadList(){
     .then(function(){ $('load').disabled = false; });
 };
 var SEL = {};   // กลุ่มที่เลือกประเมิน
-function gkey(s){ return s.year + '|' + (s.group || ''); }
+/* ปี 1–3 แสดงทั้งชั้น ไม่แบ่งกลุ่ม · ปี 4 กลุ่ม 1.1–4.2 · ปี 5 กลุ่ม 1–4 · ปี 6 กลุ่ม 1–8 */
+function grpOf(s){ var y = +s.year, g = String(s.group || '').trim(); if (y <= 3) return ''; return y === 4 ? g.replace('/', '.') : g; }
+function gkey(s){ return s.year + '|' + grpOf(s); }
 function render(r){
   if (!r) return;
   ctx = r; students = r.students; SEL = {};
   $('loadMsg').textContent = r.note || '';
-  if(!students.length){ $('list').innerHTML = '<div class="panel">ไม่พบรายชื่อนักเรียน กรุณาเลือกชั้นปีด้านบน หรือแจ้งฝ่ายกลางเพิ่มตารางหมุนเวียน</div>'; $('bar').classList.add('hidden'); return; }
+  if(!students.length){ $('list').innerHTML = '<div class="panel">'+($('yr').value ? 'ไม่พบรายชื่อนักเรียนชั้นปีนี้' : 'กรุณาเลือกชั้นปีด้านบน')+'</div>'; $('bar').classList.add('hidden'); return; }
   var groups = [], gm = {};
-  students.forEach(function(s,i){ var k = gkey(s); if (!gm[k]) { gm[k] = { k:k, year:s.year, group:s.group, idx:[], here:0, done:0 }; groups.push(gm[k]); }
+  students.forEach(function(s,i){ var k = gkey(s); if (!gm[k]) { gm[k] = { k:k, year:s.year, group:grpOf(s), idx:[], here:0, done:0 }; groups.push(gm[k]); }
     var g = gm[k]; g.idx.push(i); if (s.inRot) g.here++; if (s.done) g.done++; });
-  groups.forEach(function(g){ if (g.here || g.done) SEL[g.k] = 1; });
+  groups.sort(function(a,b){ return a.year.localeCompare(b.year) || (a.group === '') - (b.group === '') || a.group.localeCompare(b.group, 'th', {numeric:true}); });
+  groups.forEach(function(g){ if (g.here || g.done || +g.year <= 3) SEL[g.k] = 1; });
+  if (r.years && r.years.length === 1) $('yr').value = r.years[0];
   var yrs = {}; groups.forEach(function(g){ yrs[g.year] = 1; });
   var multiYear = Object.keys(yrs).length > 1, html = '<div class="hint" style="margin:0 2px 8px">สัปดาห์ '+esc(r.weekLabel)+' · ติ๊กเลือกกลุ่มที่ท่านดูแล แล้วประเมินเฉพาะกลุ่มนั้น · ทุกคนเริ่มที่ "ปกติ" เปลี่ยนเฉพาะคนที่ไม่ปกติ</div>', lastY = '';
   groups.forEach(function(g, gi){
     if (multiYear && g.year !== lastY) { html += '<div class="yh">ชั้นปี '+esc(g.year)+'</div>'; lastY = g.year; }
     var on = !!SEL[g.k];
     html += '<section class="grp'+(on?' on':'')+'" id="g'+gi+'" data-k="'+esc(g.k)+'"><label class="gh"><input type="checkbox" '+(on?'checked ':'')+'onchange="pick('+gi+',this.checked)">'+
-      '<span class="gt">'+(g.group ? 'กลุ่ม '+esc(g.group) : 'ไม่ระบุกลุ่ม')+(multiYear?'':' · ปี '+esc(g.year))+'</span>'+
+      '<span class="gt">'+(g.group ? 'กลุ่ม '+esc(g.group) : +g.year <= 3 ? 'ทั้งชั้นปี' : 'ยังไม่ระบุกลุ่ม')+(multiYear?'':' · ปี '+esc(g.year))+'</span>'+
       (g.here ? '<span class="tag">📍 อยู่ภาควิชานี้สัปดาห์นี้</span>' : '')+(g.done ? '<span class="tag done">ส่งแล้ว '+g.done+' คน</span>' : '')+
       '<span class="gn">'+g.idx.length+' คน</span></label><div class="gb">'+g.idx.map(card).join('')+'</div></section>';
   });
   $('list').innerHTML = html;
   $('bar').classList.remove('hidden'); counts();
 }
+$('yr').onchange = function(){ $('load').onclick(); };
+$('dept').onchange = function(){ $('yr').value = ''; $('list').innerHTML = ''; $('bar').classList.add('hidden'); $('load').onclick(); };
 function pick(gi, on){ var el = $('g'+gi); el.classList.toggle('on', on); if (on) SEL[el.dataset.k] = 1; else delete SEL[el.dataset.k]; counts(); }
 function chosen(i){ return !!SEL[gkey(students[i])]; }
 function card(i){
