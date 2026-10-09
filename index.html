@@ -30,6 +30,8 @@ button{font:inherit;border:0;border-radius:8px;padding:10px 16px;cursor:pointer}
 .seg input:focus-visible+label{outline:2px solid var(--brand2);outline-offset:2px}
 .seg .o0:checked+label{background:var(--s0)}.seg .o1:checked+label{background:var(--s1)}.seg .o2:checked+label{background:var(--s2)}
 .seg .o3:checked+label{background:var(--s3)}.seg .o4:checked+label{background:var(--s4)}
+.act{margin:0 0 8px}.act .lbl{font-size:13px;color:var(--muted);margin-right:4px}.act .seg{margin:4px 0 0}
+.seg .a0:checked+label,.seg .a1:checked+label{background:var(--brand2)}
 .cm{display:flex;gap:8px;align-items:flex-start}.cm textarea{min-height:44px;resize:vertical}
 .mic{background:#eef2f6;width:46px;height:46px;padding:0;font-size:20px;flex:none}.mic.on{background:#fde2e1;animation:p 1s infinite}
 @keyframes p{50%{opacity:.6}}
@@ -80,6 +82,7 @@ var CONFIG = {
   API: 'https://script.google.com/macros/s/AKfycbymoO1Kn9Hr53CLhyyEBKtPe38WB0OBqwYRWqH7GLsvUCWec26g3za3B3ww8gDiF_C6/exec'
 };
 var ST = ['โดดเด่น','ปกติ','ติดตาม','เฝ้าระวัง','ไม่จบรายวิชา'], NEEDC = {'ติดตาม':1,'เฝ้าระวัง':1,'ไม่จบรายวิชา':1};
+var ACT = ['ตักเตือนด้วยวาจา','ตักเตือนพร้อมลงโทษ'];
 var $ = function(id){return document.getElementById(id);};
 var students = [], ctx = null, idToken = '', pending = null, booted = false;
 function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
@@ -182,13 +185,16 @@ function render(r){
       var cur = s.status || 'ปกติ';
       return '<div class="stu'+(cur!=='ปกติ'?' flag':'')+'" id="c'+i+'"><div class="top"><span class="name">'+esc(s.name)+'</span><span class="id">'+esc(s.id)+' · ปี '+esc(s.year)+'</span></div>'+
         '<div class="seg" role="radiogroup" aria-label="สถานะ '+esc(s.name)+'">'+ST.map(function(o,k){var id='r'+i+'_'+k;return '<input type="radio" class="o'+k+'" name="s'+i+'" id="'+id+'" value="'+o+'"'+(o===cur?' checked':'')+' onchange="chg('+i+')"><label for="'+id+'">'+o+'</label>';}).join('')+'</div>'+
+        '<div class="act'+(NEEDC[cur]?'':' hidden')+'" id="a'+i+'" role="radiogroup" aria-label="การดำเนินการ"><span class="lbl">การดำเนินการ *</span><div class="seg">'+
+        ACT.map(function(o,k){var id='x'+i+'_'+k;return '<input type="radio" class="a'+k+'" name="x'+i+'" id="'+id+'" value="'+o+'"'+(o===s.action?' checked':'')+'><label for="'+id+'">'+o+'</label>';}).join('')+'</div></div>'+
         '<div class="cm"><textarea id="t'+i+'" rows="1" aria-label="ความเห็น '+esc(s.name)+'" placeholder="ความเห็น (จำเป็นเมื่อ ติดตาม / เฝ้าระวัง / ไม่จบรายวิชา)">'+esc(s.comment||'')+'</textarea>'+
         (micOk?'<button type="button" class="mic" id="m'+i+'" onclick="mic('+i+')" aria-label="พูดความเห็น">🎤</button>':'')+'</div><div class="err" id="e'+i+'"></div></div>';
     }).join('');
   $('bar').classList.remove('hidden'); counts();
 }
 function val(i){ var x = document.querySelector('input[name=s'+i+']:checked'); return x ? x.value : 'ปกติ'; }
-function chg(i){ $('c'+i).classList.toggle('flag', val(i)!=='ปกติ'); counts(); }
+function chg(i){ $('c'+i).classList.toggle('flag', val(i)!=='ปกติ'); $('a'+i).classList.toggle('hidden', !NEEDC[val(i)]); counts(); }
+function act(i){ var x = document.querySelector('input[name=x'+i+']:checked'); return x ? x.value : ''; }
 function counts(){ var c={}; students.forEach(function(s,i){var v=val(i);c[v]=(c[v]||0)+1;}); $('counts').textContent = ST.filter(function(o){return c[o];}).map(function(o){return o+' '+c[o];}).join(' · '); }
 
 /* ---------- พูดแล้วแปลงเป็นข้อความ ---------- */
@@ -211,9 +217,12 @@ $('submit').onclick = function send(){
   if (rec) rec.stop();
   var rows = [], bad = 0, first = -1;
   students.forEach(function(s,i){ var v = val(i), c = $('t'+i).value.trim(); $('e'+i).textContent='';
-    if(NEEDC[v] && !c){ $('e'+i).textContent='กรุณาใส่ความเห็นสำหรับสถานะนี้'; bad++; if (first < 0) first = i; }
-    rows.push({id:s.id, status:v, comment:c}); });
-  if(bad){ $('c'+first).scrollIntoView({behavior:'smooth', block:'center'}); $('counts').textContent = 'มี '+bad+' คนที่ยังไม่ได้ใส่ความเห็น'; return; }
+    var a = NEEDC[v] ? act(i) : '', miss = [];
+    if(NEEDC[v] && !c) miss.push('ใส่ความเห็น');
+    if(NEEDC[v] && !a) miss.push('เลือกการดำเนินการ');
+    if(miss.length){ $('e'+i).textContent='กรุณา'+miss.join(' และ ')+'สำหรับสถานะนี้'; bad++; if (first < 0) first = i; }
+    rows.push({id:s.id, status:v, comment:c, action:a}); });
+  if(bad){ $('c'+first).scrollIntoView({behavior:'smooth', block:'center'}); $('counts').textContent = 'มี '+bad+' คนที่ยังกรอกไม่ครบ'; return; }
   $('submit').disabled = true; $('submit').textContent = 'กำลังส่ง...';
   api('save', { payload: {dept: ctx.dept, week: ctx.week, rows: rows} }, send).then(function(r){
       $('app').classList.add('hidden'); $('bar').classList.add('hidden');
