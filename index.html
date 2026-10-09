@@ -41,6 +41,16 @@ button{font:inherit;border:0;border-radius:8px;padding:10px 16px;cursor:pointer}
 .counts{font-size:13px;color:var(--muted)}
 .ok{background:#e7f6ef;border-color:#b5e2cc}.warn{background:#fff7e6;border-color:#f3d19c}
 .hidden{display:none!important}
+.grp{background:var(--card);border:1px solid var(--line);border-radius:10px;margin-bottom:10px}
+.grp>.gh{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;flex-wrap:wrap}
+.grp>.gh input{width:22px;height:22px;flex:none;accent-color:var(--brand2)}
+.grp>.gh .gt{font-weight:600;flex:1;min-width:150px}
+.grp>.gh .gn{font-size:13px;color:var(--muted)}
+.grp.on{border-color:var(--brand2);box-shadow:inset 0 0 0 1px var(--brand2)}
+.grp>.gb{padding:0 10px 2px}.grp:not(.on)>.gb{display:none}
+.tag{font-size:12px;padding:2px 8px;border-radius:999px;background:#e8f1fb;color:#16466e;white-space:nowrap}
+.tag.done{background:#e7f6ef;color:#1a6b49}
+.yh{font-size:14px;font-weight:600;color:var(--muted);margin:14px 2px 8px}
 #gbtn{min-height:44px;margin:12px 0}
 .overlay{position:fixed;inset:0;background:rgba(20,30,45,.45);display:flex;align-items:center;justify-content:center;padding:16px;z-index:10}
 .overlay .panel{max-width:420px;width:100%}
@@ -64,8 +74,8 @@ button{font:inherit;border:0;border-radius:8px;padding:10px 16px;cursor:pointer}
       <div><label for="dept">ภาควิชา *</label><select id="dept"></select></div>
       <div><label for="week">สัปดาห์ที่ประเมิน (เลือกวันใดก็ได้ในสัปดาห์นั้น) *</label><input type="date" id="week"></div>
     </div>
-    <label for="yr">ชั้นปี (ใช้เมื่อยังไม่มีตารางหมุนเวียน)</label>
-    <select id="yr"><option value="">ใช้ตารางหมุนเวียน</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option></select>
+    <label for="yr">ชั้นปี</label>
+    <select id="yr"><option value="">ตามตารางหมุนเวียนของภาควิชา</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option></select>
     <p><button class="primary" id="load">แสดงรายชื่อ</button> <span id="loadMsg" class="hint" role="status"></span></p>
     <div class="hint" id="micHint"></div>
   </div>
@@ -158,6 +168,7 @@ function boot(){
     var q = new URLSearchParams(location.search);
     if (q.get('dept') && b.depts.indexOf(q.get('dept')) >= 0) $('dept').value = q.get('dept');
     if (/^\d{4}-\d{2}-\d{2}$/.test(q.get('week') || '')) $('week').value = q.get('week');
+    if ($('dept').value) setTimeout(function(){ $('load').onclick(); }, 0);
     $('micHint').textContent = micOk ? 'กด 🎤 แล้วพูดความเห็น ระบบจะแปลงเป็นข้อความให้ (กดอีกครั้งเพื่อหยุด และตรวจทานก่อนส่ง)'
                                      : 'เบราว์เซอร์นี้ไม่รองรับปุ่ม 🎤 — แตะช่องความเห็นแล้วกดไมค์บนคีย์บอร์ดมือถือเพื่อพูดแทนพิมพ์';
   }).catch(function(e){
@@ -175,27 +186,47 @@ $('load').onclick = function loadList(){
     .catch(function(e){ if (!e.handled) $('loadMsg').textContent = e.message; })
     .then(function(){ $('load').disabled = false; });
 };
+var SEL = {};   // กลุ่มที่เลือกประเมิน
+function gkey(s){ return s.year + '|' + (s.group || ''); }
 function render(r){
   if (!r) return;
-  ctx = r; students = r.students;
+  ctx = r; students = r.students; SEL = {};
   $('loadMsg').textContent = r.note || '';
   if(!students.length){ $('list').innerHTML = '<div class="panel">ไม่พบรายชื่อนักเรียน กรุณาเลือกชั้นปีด้านบน หรือแจ้งฝ่ายกลางเพิ่มตารางหมุนเวียน</div>'; $('bar').classList.add('hidden'); return; }
-  $('list').innerHTML = '<div class="hint" style="margin:0 2px 8px">สัปดาห์ '+esc(r.weekLabel)+' · '+students.length+' คน · ทุกคนเริ่มที่ "ปกติ" เปลี่ยนเฉพาะคนที่ไม่ปกติ</div>' +
-    students.map(function(s,i){
-      var cur = s.status || 'ปกติ';
-      return '<div class="stu'+(cur!=='ปกติ'?' flag':'')+'" id="c'+i+'"><div class="top"><span class="name">'+esc(s.name)+'</span><span class="id">'+esc(s.id)+' · ปี '+esc(s.year)+'</span></div>'+
-        '<div class="seg" role="radiogroup" aria-label="สถานะ '+esc(s.name)+'">'+ST.map(function(o,k){var id='r'+i+'_'+k;return '<input type="radio" class="o'+k+'" name="s'+i+'" id="'+id+'" value="'+o+'"'+(o===cur?' checked':'')+' onchange="chg('+i+')"><label for="'+id+'">'+o+'</label>';}).join('')+'</div>'+
-        '<div class="act'+(NEEDC[cur]?'':' hidden')+'" id="a'+i+'" role="radiogroup" aria-label="การดำเนินการ"><span class="lbl">การดำเนินการ *</span><div class="seg">'+
-        ACT.map(function(o,k){var id='x'+i+'_'+k;return '<input type="radio" class="a'+k+'" name="x'+i+'" id="'+id+'" value="'+o+'"'+(o===s.action?' checked':'')+'><label for="'+id+'">'+o+'</label>';}).join('')+'</div></div>'+
-        '<div class="cm"><textarea id="t'+i+'" rows="1" aria-label="ความเห็น '+esc(s.name)+'" placeholder="ความเห็น (จำเป็นเมื่อ ติดตาม / เฝ้าระวัง / ไม่จบรายวิชา)">'+esc(s.comment||'')+'</textarea>'+
-        (micOk?'<button type="button" class="mic" id="m'+i+'" onclick="mic('+i+')" aria-label="พูดความเห็น">🎤</button>':'')+'</div><div class="err" id="e'+i+'"></div></div>';
-    }).join('');
+  var groups = [], gm = {};
+  students.forEach(function(s,i){ var k = gkey(s); if (!gm[k]) { gm[k] = { k:k, year:s.year, group:s.group, idx:[], here:0, done:0 }; groups.push(gm[k]); }
+    var g = gm[k]; g.idx.push(i); if (s.inRot) g.here++; if (s.done) g.done++; });
+  groups.forEach(function(g){ if (g.here || g.done) SEL[g.k] = 1; });
+  var yrs = {}; groups.forEach(function(g){ yrs[g.year] = 1; });
+  var multiYear = Object.keys(yrs).length > 1, html = '<div class="hint" style="margin:0 2px 8px">สัปดาห์ '+esc(r.weekLabel)+' · ติ๊กเลือกกลุ่มที่ท่านดูแล แล้วประเมินเฉพาะกลุ่มนั้น · ทุกคนเริ่มที่ "ปกติ" เปลี่ยนเฉพาะคนที่ไม่ปกติ</div>', lastY = '';
+  groups.forEach(function(g, gi){
+    if (multiYear && g.year !== lastY) { html += '<div class="yh">ชั้นปี '+esc(g.year)+'</div>'; lastY = g.year; }
+    var on = !!SEL[g.k];
+    html += '<section class="grp'+(on?' on':'')+'" id="g'+gi+'" data-k="'+esc(g.k)+'"><label class="gh"><input type="checkbox" '+(on?'checked ':'')+'onchange="pick('+gi+',this.checked)">'+
+      '<span class="gt">'+(g.group ? 'กลุ่ม '+esc(g.group) : 'ไม่ระบุกลุ่ม')+(multiYear?'':' · ปี '+esc(g.year))+'</span>'+
+      (g.here ? '<span class="tag">📍 อยู่ภาควิชานี้สัปดาห์นี้</span>' : '')+(g.done ? '<span class="tag done">ส่งแล้ว '+g.done+' คน</span>' : '')+
+      '<span class="gn">'+g.idx.length+' คน</span></label><div class="gb">'+g.idx.map(card).join('')+'</div></section>';
+  });
+  $('list').innerHTML = html;
   $('bar').classList.remove('hidden'); counts();
+}
+function pick(gi, on){ var el = $('g'+gi); el.classList.toggle('on', on); if (on) SEL[el.dataset.k] = 1; else delete SEL[el.dataset.k]; counts(); }
+function chosen(i){ return !!SEL[gkey(students[i])]; }
+function card(i){
+  var s = students[i], cur = s.status || 'ปกติ';
+  return '<div class="stu'+(cur!=='ปกติ'?' flag':'')+'" id="c'+i+'"><div class="top"><span class="name">'+esc(s.name)+'</span><span class="id">'+esc(s.id)+' · ปี '+esc(s.year)+'</span></div>'+
+    '<div class="seg" role="radiogroup" aria-label="สถานะ '+esc(s.name)+'">'+ST.map(function(o,k){var id='r'+i+'_'+k;return '<input type="radio" class="o'+k+'" name="s'+i+'" id="'+id+'" value="'+o+'"'+(o===cur?' checked':'')+' onchange="chg('+i+')"><label for="'+id+'">'+o+'</label>';}).join('')+'</div>'+
+    '<div class="act'+(NEEDC[cur]?'':' hidden')+'" id="a'+i+'" role="radiogroup" aria-label="การดำเนินการ"><span class="lbl">การดำเนินการ *</span><div class="seg">'+
+    ACT.map(function(o,k){var id='x'+i+'_'+k;return '<input type="radio" class="a'+k+'" name="x'+i+'" id="'+id+'" value="'+o+'"'+(o===s.action?' checked':'')+'><label for="'+id+'">'+o+'</label>';}).join('')+'</div></div>'+
+    '<div class="cm"><textarea id="t'+i+'" rows="1" aria-label="ความเห็น '+esc(s.name)+'" placeholder="ความเห็น (จำเป็นเมื่อ ติดตาม / เฝ้าระวัง / ไม่จบรายวิชา)">'+esc(s.comment||'')+'</textarea>'+
+    (micOk?'<button type="button" class="mic" id="m'+i+'" onclick="mic('+i+')" aria-label="พูดความเห็น">🎤</button>':'')+'</div><div class="err" id="e'+i+'"></div></div>';
 }
 function val(i){ var x = document.querySelector('input[name=s'+i+']:checked'); return x ? x.value : 'ปกติ'; }
 function chg(i){ $('c'+i).classList.toggle('flag', val(i)!=='ปกติ'); $('a'+i).classList.toggle('hidden', !NEEDC[val(i)]); counts(); }
 function act(i){ var x = document.querySelector('input[name=x'+i+']:checked'); return x ? x.value : ''; }
-function counts(){ var c={}; students.forEach(function(s,i){var v=val(i);c[v]=(c[v]||0)+1;}); $('counts').textContent = ST.filter(function(o){return c[o];}).map(function(o){return o+' '+c[o];}).join(' · '); }
+function counts(){ var c={}, n=0; students.forEach(function(s,i){ if(!chosen(i)) return; n++; var v=val(i);c[v]=(c[v]||0)+1;});
+  $('counts').textContent = n ? 'เลือก '+Object.keys(SEL).length+' กลุ่ม '+n+' คน · '+ST.filter(function(o){return c[o];}).map(function(o){return o+' '+c[o];}).join(' · ') : 'ยังไม่ได้เลือกกลุ่ม';
+  $('submit').disabled = !n; }
 
 /* ---------- พูดแล้วแปลงเป็นข้อความ ---------- */
 var rec = null, recI = -1;
@@ -216,12 +247,13 @@ function mic(i){
 $('submit').onclick = function send(){
   if (rec) rec.stop();
   var rows = [], bad = 0, first = -1;
-  students.forEach(function(s,i){ var v = val(i), c = $('t'+i).value.trim(); $('e'+i).textContent='';
+  students.forEach(function(s,i){ if (!chosen(i)) return; var v = val(i), c = $('t'+i).value.trim(); $('e'+i).textContent='';
     var a = NEEDC[v] ? act(i) : '', miss = [];
     if(NEEDC[v] && !c) miss.push('ใส่ความเห็น');
     if(NEEDC[v] && !a) miss.push('เลือกการดำเนินการ');
     if(miss.length){ $('e'+i).textContent='กรุณา'+miss.join(' และ ')+'สำหรับสถานะนี้'; bad++; if (first < 0) first = i; }
     rows.push({id:s.id, status:v, comment:c, action:a}); });
+  if(!rows.length){ $('counts').textContent = 'กรุณาติ๊กเลือกอย่างน้อย 1 กลุ่ม'; return; }
   if(bad){ $('c'+first).scrollIntoView({behavior:'smooth', block:'center'}); $('counts').textContent = 'มี '+bad+' คนที่ยังกรอกไม่ครบ'; return; }
   $('submit').disabled = true; $('submit').textContent = 'กำลังส่ง...';
   api('save', { payload: {dept: ctx.dept, week: ctx.week, rows: rows} }, send).then(function(r){
@@ -229,7 +261,7 @@ $('submit').onclick = function send(){
       $('done').innerHTML = '<b>ส่งเรียบร้อย ขอบคุณครับ/ค่ะ</b><br>'+esc(r.message)+'<p><button class="ghost" onclick="again()">ประเมินภาควิชา/สัปดาห์อื่น</button></p>';
       $('done').classList.remove('hidden'); window.scrollTo(0,0);
     }).catch(function(e){ if (!e.handled) { $('counts').textContent = e.message; } })
-    .then(function(){ $('submit').disabled=false; $('submit').textContent='ส่งการประเมิน'; });
+    .then(function(){ $('submit').textContent='ส่งการประเมิน'; counts(); });
 };
 function again(){ $('done').classList.add('hidden'); $('list').innerHTML=''; $('loadMsg').textContent=''; $('app').classList.remove('hidden'); window.scrollTo(0,0); }
 window.addEventListener('beforeunload', function(e){ if (!$('bar').classList.contains('hidden') && !$('submit').disabled) { e.preventDefault(); e.returnValue=''; } });
