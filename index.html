@@ -187,7 +187,7 @@ $('load').onclick = function loadList(){
     .then(function(){ $('load').disabled = false; });
 };
 var SEL = {};   // กลุ่มที่เลือกประเมิน
-/* ปี 1–3 แสดงทั้งชั้น ไม่แบ่งกลุ่ม · ปี 4 กลุ่ม 1.1–4.2 · ปี 5 กลุ่ม 1–4 · ปี 6 กลุ่ม 1–8 แต่ละกลุ่มมีกลุ่มย่อย .1–.4 */
+/* ปี 1–3 แสดงทั้งชั้น ไม่แบ่งกลุ่ม · ปี 4 กลุ่ม 1–4 (กลุ่มย่อย .1–.2) · ปี 5 กลุ่ม 1–4 · ปี 6 กลุ่ม 1–8 (กลุ่มย่อย .1–.4) */
 function grpOf(s){ var y = +s.year; if (y <= 3) return ''; return String(s.group || '').trim().replace(/^(gr|g)\s*/i, '').replace(/\s+/g, '').replace('/', '.'); }
 function gkey(s){ return s.year + '|' + grpOf(s); }
 function render(r){
@@ -205,7 +205,7 @@ function render(r){
   var multiYear = Object.keys(yrs).length > 1, html = '<div class="hint" style="margin:0 2px 8px">สัปดาห์ '+esc(r.weekLabel)+' · ติ๊กเลือกกลุ่มที่ท่านดูแล แล้วประเมินเฉพาะกลุ่มนั้น · ทุกคนเริ่มที่ "ปกติ" เปลี่ยนเฉพาะคนที่ไม่ปกติ</div>', lastY = '', lastM = '';
   groups.forEach(function(g, gi){
     if (multiYear && g.year !== lastY) { html += '<div class="yh">ชั้นปี '+esc(g.year)+'</div>'; lastY = g.year; lastM = ''; }
-    var main = +g.year === 6 && g.group.indexOf('.') > 0 ? g.group.split('.')[0] : '';
+    var main = (+g.year === 4 || +g.year === 6) && g.group.indexOf('.') > 0 ? g.group.split('.')[0] : '';
     if (main && main !== lastM) html += '<div class="yh">กลุ่ม '+esc(main)+'</div>';
     lastM = main;
     var on = !!SEL[g.k];
