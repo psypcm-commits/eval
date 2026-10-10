@@ -71,7 +71,8 @@ button{font:inherit;border:0;border-radius:8px;padding:10px 16px;cursor:pointer}
 <div id="app" class="hidden">
   <div class="panel">
     <div class="row2">
-      <div><label for="dept">ภาควิชา *</label><select id="dept"></select></div>
+      <div><label for="dept">ภาควิชาที่จัดการเรียนการสอน *</label><select id="dept"></select>
+        <div class="hint" style="margin-top:4px">เลือกภาควิชาเจ้าของรายวิชาที่นักเรียนเรียนอยู่ ไม่ใช่ภาควิชาที่ท่านสังกัด</div></div>
       <div><label for="week">สัปดาห์ที่ประเมิน (เลือกวันใดก็ได้ในสัปดาห์นั้น) *</label><input type="date" id="week"></div>
     </div>
     <label for="yr">ชั้นปี</label>
@@ -180,7 +181,7 @@ function switchAcct(){ try { google.accounts.id.disableAutoSelect(); google.acco
 
 $('load').onclick = function loadList(){
   var d = $('dept').value, w = $('week').value;
-  if(!d || !w){ $('loadMsg').textContent = 'กรุณาเลือกภาควิชาและสัปดาห์'; return; }
+  if(!d || !w){ $('loadMsg').textContent = 'กรุณาเลือกภาควิชาที่จัดการเรียนการสอนและสัปดาห์'; return; }
   $('loadMsg').textContent = 'กำลังโหลด...'; $('load').disabled = true;
   api('roster', { dept: d, week: w, year: $('yr').value }, loadList).then(render)
     .catch(function(e){ if (!e.handled) $('loadMsg').textContent = e.message; })
