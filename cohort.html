@@ -6,7 +6,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2316466e'/%3E%3Crect x='12' y='14' width='10' height='10' rx='2' fill='white'/%3E%3Crect x='27' y='14' width='10' height='10' rx='2' fill='white' opacity='.6'/%3E%3Crect x='42' y='14' width='10' height='10' rx='2' fill='white'/%3E%3Crect x='12' y='30' width='10' height='10' rx='2' fill='white' opacity='.6'/%3E%3Crect x='27' y='30' width='10' height='10' rx='2' fill='white'/%3E%3Crect x='42' y='30' width='10' height='10' rx='2' fill='white' opacity='.6'/%3E%3C/svg%3E">
 <style>
 :root{--bg:#f4f6f9;--card:#fff;--ink:#1d2733;--muted:#5d6b7a;--faint:#8a96a3;--line:#dde3ea;--soft:#eef2f6;--brand:#16466e;--brand2:#1f6aa5;
---good:#0ca30c;--warn:#fab219;--serious:#ec835a;--crit:#d03b3b;--normal:#c9d1da;--none:#f1f3f6;--future:transparent;--hl:#e8f1fb}
+--good:#0ca30c;--warn:#fab219;--serious:#d32f2f;--crit:#6a1b9a;--normal:#c9d1da;--none:#f1f3f6;--future:transparent;--hl:#e8f1fb}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#121416;--card:#1a1c1e;--ink:#e6e8eb;--muted:#a3adb8;--faint:#7d8792;--line:#30353a;--soft:#24282c;
 --brand:#0f2f4b;--brand2:#3b86c6;--normal:#4a525a;--none:#22262a;--hl:#1d2a38}}
 *{box-sizing:border-box}
@@ -31,7 +31,7 @@ select,input[type=search]{font:inherit;padding:8px 10px;border:1px solid var(--l
 .legend span{display:inline-flex;align-items:center;gap:6px}
 .st{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:5px;font-size:12px;line-height:1;color:#1d2733;flex:none}
 .st.s-โดดเด่น{background:var(--good);color:#fff}.st.s-ปกติ{background:var(--normal)}.st.s-ติดตาม{background:var(--warn)}
-.st.s-เฝ้าระวัง{background:var(--serious)}.st.s-ไม่จบรายวิชา{background:var(--crit);color:#fff}
+.st.s-เฝ้าระวัง{background:var(--serious);color:#fff}.st.s-ไม่จบรายวิชา{background:var(--crit);color:#fff}
 .st.none{background:var(--none);border:1px solid var(--line)}.st.future{background:var(--future);border:1px dashed var(--faint)}
 .st.now{box-shadow:0 0 0 2px var(--card),0 0 0 4px var(--brand2)}
 .tablewrap{overflow-x:auto;background:var(--card);border:1px solid var(--line);border-radius:10px}
