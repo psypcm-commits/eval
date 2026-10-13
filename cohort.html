@@ -153,7 +153,7 @@ function build(){
     x.rot.forEach(function(r){ depts[r.dept]=1; r.rat.sort(function(a,b){ return a.week < b.week ? -1 : 1; }); });
     return x; });
   var sel = $('dept'), cur = sel.value;
-  sel.innerHTML = '<option value="">ทุกภาควิชา</option>' + Object.keys(depts).sort().map(function(x){ return '<option value="'+esc(x)+'">'+esc(short(x))+'</option>'; }).join('');
+  sel.innerHTML = '<option value="">ทุกภาควิชา</option>' + Object.keys(depts).sort(function(a,b){ return short(a).localeCompare(short(b),'th'); }).map(function(x){ return '<option value="'+esc(x)+'">'+esc(short(x))+'</option>'; }).join('');
   sel.value = cur;
 }
 /* ข้อมูลที่อยู่ในช่วงที่เลือก */
