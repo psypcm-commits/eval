@@ -101,6 +101,7 @@ a.lnk{color:var(--brand2);cursor:pointer;text-decoration:underline}
     <button role="tab" data-v="person" aria-selected="true">รายบุคคล</button>
     <button role="tab" data-v="cohort" aria-selected="false">ภาพรวมชั้นปี</button>
     <button role="tab" data-v="teach" aria-selected="false">การมีส่วนร่วมของอาจารย์</button>
+    <button role="tab" data-v="set" aria-selected="false">ตั้งค่า</button>
   </nav>
 
   <section id="v-person" class="layout">
@@ -132,6 +133,8 @@ a.lnk{color:var(--brand2);cursor:pointer;text-decoration:underline}
     </div>
     <div id="teachBody"><div class="panel empty">กำลังโหลด...</div></div>
   </section>
+
+  <section id="v-set" class="hidden"><div id="setBody"><div class="panel empty">กำลังโหลด...</div></div></section>
 </div>
 </main>
 
@@ -147,7 +150,7 @@ a.lnk{color:var(--brand2);cursor:pointer;text-decoration:underline}
 <script>
 var CONFIG = {
   CLIENT_ID: '731005120812-6qqtlt9a6sudckuuk8u2jpg13idm48ml.apps.googleusercontent.com',
-  API: 'https://script.google.com/macros/s/AKfycbymoO1Kn9Hr53CLhyyEBKtPe38WB0OBqwYRWqH7GLsvUCWec26g3za3B3ww8gDiF_C6/exec'
+  API: 'https://script.google.com/macros/s/AKfycbzqqvwnWpXkOnO27C5lhck5iivB73IQeTJr5BK2dinsEJl7aXfXtA-8YGbIaT9Ei2lmpg/exec'
 };
 var STAT = ['โดดเด่น','ปกติ','ติดตาม','เฝ้าระวัง','ไม่จบรายวิชา'], ICON = {'โดดเด่น':'★','ปกติ':'','ติดตาม':'●','เฝ้าระวัง':'▲','ไม่จบรายวิชา':'■'};
 var COLOR = {'โดดเด่น':'var(--s0)','ปกติ':'var(--s1)','ติดตาม':'var(--s2)','เฝ้าระวัง':'var(--s3)','ไม่จบรายวิชา':'var(--s4)'}, CONCERN = {'ติดตาม':1,'เฝ้าระวัง':1,'ไม่จบรายวิชา':1};
@@ -202,9 +205,10 @@ function showView(v){
   if (v !== 'person') psyLock();
   VIEW = v;
   [].forEach.call(document.querySelectorAll('nav.tabs button'), function(b){ b.setAttribute('aria-selected', String(b.dataset.v === v)); });
-  ['person','cohort','teach'].forEach(function(k){ $('v-'+k).classList.toggle('hidden', k !== v); });
+  ['person','cohort','teach','set'].forEach(function(k){ $('v-'+k).classList.toggle('hidden', k !== v); });
   if (v === 'cohort' && !LOADED.cohort) loadCohort();
   if (v === 'teach' && !LOADED.teach) loadTeach();
+  if (v === 'set') loadSettings();
 }
 
 /* ---------- ค้นหา ---------- */
@@ -455,7 +459,7 @@ function renderPsy(el){
   el.innerHTML = '<div class="panel"><div class="lockbox"><div style="font-size:28px">🔒</div><h3>ส่วนข้อมูลลับ</h3>'+
     '<p class="hint">ใส่ PIN เพื่อเปิดข้อมูลด้านสุขภาพจิตของ <b>'+esc(B.profile.name)+'</b> เท่านั้น<br>ระบบจะล็อกอีกครั้งเมื่อเปลี่ยนนักเรียน ออกจากส่วนนี้ หรือไม่ใช้งาน '+Math.round(INIT.psyIdle/60)+' นาที</p>'+
     (INIT.pinSet ? '<form id="pinForm" autocomplete="off"><input type="password" id="pin" inputmode="numeric" autocomplete="off" maxlength="12" aria-label="PIN" required> <button class="pri" id="pinGo">ปลดล็อก</button></form>'
-      : '<p class="msg err">ยังไม่ได้ตั้ง PIN — ตั้งได้ที่ DB_MAIN เมนู ระบบติดตาม > สุขภาพจิต/การรักษา: ตั้ง/เปลี่ยน PIN สำหรับหน้า Super Admin แล้วโหลดหน้านี้ใหม่</p>')+
+      : '<p class="msg err">ยังไม่ได้ตั้ง PIN — ตั้งได้ที่แท็บ "ตั้งค่า" ด้านบน</p>')+
     '<div class="msg err" id="pinMsg" role="alert"></div></div></div>';
   if (!$('pinForm')) return;
   $('pin').focus();
@@ -559,6 +563,52 @@ function loadTeach(){
         : '<div class="nosrc">ยังไม่มีฐานคำนวณในช่วงนี้ (ไม่มี rotation ที่สิ้นสุดแล้วในตารางหมุนเวียน) จึงไม่แสดงเปอร์เซ็นต์</div>')+
         '<div class="note">ฐาน = นักเรียน 1 คน × 1 rotation ที่สิ้นสุดแล้วในช่วงที่เลือก (หน่วย: คน-rotation) · นับว่าประเมินแล้วเมื่อมีผลประเมินจากภาควิชานั้นระหว่างช่วง rotation ถึง 2 สัปดาห์หลังสิ้นสุด</div></div>';
   }).catch(function(e){ if (relogin(e, loadTeach)) return; $('teachBody').innerHTML = '<div class="panel empty">'+esc(e.message)+'</div>'; });
+}
+/* ---------- ตั้งค่า (เฉพาะ psypcm) ---------- */
+var STAFF_CONFIRM = '';
+function loadSettings(){
+  $('setBody').innerHTML = '<div class="panel empty">กำลังโหลด...</div>';
+  api('adm_settings').then(renderSettings).catch(function(e){ if (relogin(e, loadSettings)) return; $('setBody').innerHTML = '<div class="panel empty">'+esc(e.message)+'</div>'; });
+}
+function renderSettings(d){
+  INIT.pinSet = d.pinSet;
+  var psy = d.psych.map(function(r){ var sh = r.editors.concat(r.viewers);
+    return '<tr><td><a class="lnk" href="'+esc(r.url)+'" target="_blank" rel="noopener">'+esc(r.name)+'</a></td><td>'+(r.ok ? '<span class="pill">✓ เจ้าของคนเดียว ไม่ได้แชร์</span>' :
+      '<span class="pill warn">⚠ แชร์อยู่: '+esc(sh.join(', ')+(r.link!=='PRIVATE'?' · ลิงก์ '+r.link:''))+'</span>')+'</td></tr>'; }).join('');
+  var staff = d.staff.length ? '<div class="tablewrap"><table><thead><tr><th>อีเมล</th><th>สิทธิ์ใน DB_MAIN</th><th>ใช้เมนูได้</th><th>ไฟล์จิตเวช</th><th></th></tr></thead><tbody>'+
+    d.staff.map(function(x){ return '<tr><td>'+esc(x.email)+'</td><td>'+esc(x.role)+'</td><td>'+(x.core?'✓':'<span class="pill warn">ยังไม่ได้ — กดเพิ่มซ้ำ</span>')+'</td><td>'+(x.psych?'<span class="pill warn">⚠ มีสิทธิ์ — กดเพิ่มซ้ำเพื่อถอน</span>':'ไม่มีสิทธิ์ ✓')+'</td>'+
+      '<td><button class="sm '+(STAFF_CONFIRM===x.email?'danger':'')+'" data-rm="'+esc(x.email)+'">'+(STAFF_CONFIRM===x.email?'ยืนยันถอนสิทธิ์':'ถอนสิทธิ์')+'</button></td></tr>'; }).join('')+'</tbody></table></div>'
+    : '<div class="hint">ยังไม่มีแอดมินเจ้าหน้าที่</div>';
+  $('setBody').innerHTML =
+    '<div class="panel"><h3>แอดมินเจ้าหน้าที่ (แก้ไข DB_MAIN ได้ ยกเว้นข้อมูลจิตเวช)</h3>'+staff+
+      '<form id="staffForm" class="filters" style="margin-top:12px"><input type="email" id="staffEmail" placeholder="อีเมลบัญชี Google ของเจ้าหน้าที่" style="flex:1;min-width:220px" required> <button class="pri" id="staffAdd">เพิ่มแอดมินเจ้าหน้าที่</button></form>'+
+      '<div class="msg" id="staffMsg" role="status"></div>'+
+      '<div class="note">เพิ่มแล้ว: เจ้าหน้าที่แก้ไข DB_MAIN และใช้เมนู "ระบบติดตาม" ได้ · Google จะส่งอีเมลแจ้งการแชร์ให้เจ้าหน้าที่ · ไม่ได้รับสิทธิ์ไฟล์จิตเวช (ถ้ามีค้างอยู่ระบบถอนให้) · ไม่ได้ใช้หน้าเว็บนี้ · แท็บ _Log และ _ประวัติแก้ไขผ่านเว็บ ล็อกให้ระบบเขียนเท่านั้น</div></div>'+
+    '<div class="panel"><h3>PIN ส่วนข้อมูลลับ</h3><p class="hint" style="margin-top:0">สถานะ: '+(d.pinSet?'<b>ตั้งแล้ว</b>':'<b style="color:var(--err)">ยังไม่ได้ตั้ง</b>')+' · ตัวเลข 6–12 หลัก ระบบเก็บเฉพาะค่าแฮช</p>'+
+      '<form id="pinSetForm" class="grid2" autocomplete="off">'+(d.pinSet?fld('pinCur','PIN เดิม','<input type="password" id="pinCur" inputmode="numeric" maxlength="12" autocomplete="off">'):'')+
+      fld('pinNew','PIN ใหม่','<input type="password" id="pinNew" inputmode="numeric" maxlength="12" autocomplete="new-password">')+fld('pinNew2','ยืนยัน PIN ใหม่','<input type="password" id="pinNew2" inputmode="numeric" maxlength="12" autocomplete="new-password">')+
+      '<div><button class="pri" id="pinSave">'+(d.pinSet?'เปลี่ยน PIN':'ตั้ง PIN')+'</button></div></form><div class="msg" id="pinSetMsg" role="status"></div></div>'+
+    '<div class="panel"><h3>ไฟล์ข้อมูลจิตเวช (ต้องมีแค่ '+esc(d.owner)+')</h3><div class="tablewrap"><table><tbody>'+psy+'</tbody></table></div>'+
+      '<div class="note">DB_MAIN: <a class="lnk" href="'+esc(d.mainUrl)+'" target="_blank" rel="noopener">เปิดไฟล์</a> · การแชร์ลิงก์ '+esc(d.mainLink)+'</div></div>';
+  [].forEach.call(document.querySelectorAll('[data-rm]'), function(b){ b.onclick = function(){
+    var em = b.dataset.rm; if (STAFF_CONFIRM !== em){ STAFF_CONFIRM = em; renderSettings(d); return; }
+    STAFF_CONFIRM = ''; b.disabled = true; staffCall('adm_staff_remove', em); }; });
+  $('staffForm').onsubmit = function(e){ e.preventDefault(); var em = $('staffEmail').value.trim();
+    if (!/^[^\s@,;]+@[^\s@,;]+\.[^\s@,;]+$/.test(em)){ $('staffMsg').className='msg err'; $('staffMsg').textContent = 'อีเมลไม่ถูกต้อง'; return; }
+    $('staffAdd').disabled = true; staffCall('adm_staff_add', em); };
+  $('pinSetForm').onsubmit = function(e){ e.preventDefault(); var a = $('pinNew').value.trim(), b = $('pinNew2').value.trim(), c = $('pinCur') ? $('pinCur').value.trim() : '', m = $('pinSetMsg');
+    m.className = 'msg err';
+    if (!/^\d{6,12}$/.test(a)){ m.textContent = 'PIN ต้องเป็นตัวเลข 6–12 หลัก'; return; }
+    if (a !== b){ m.textContent = 'PIN ใหม่สองช่องไม่ตรงกัน'; return; }
+    $('pinSave').disabled = true; m.className = 'msg'; m.textContent = 'กำลังบันทึก...';
+    [].forEach.call(document.querySelectorAll('#pinSetForm input'), function(x){ x.value = ''; });
+    api('psy_setpin', { pin: c, newPin: a }).then(function(r){ INIT.pinSet = true; toast(r.message); loadSettings(); })
+      .catch(function(err){ if (relogin(err, loadSettings)) return; $('pinSave').disabled = false; m.className = 'msg err'; m.textContent = err.message; }); };
+}
+function staffCall(action, email){
+  $('staffMsg').className = 'msg'; $('staffMsg').textContent = 'กำลังดำเนินการ...';
+  api(action, { email: email }).then(function(d){ toast(d.message); renderSettings(d); })
+    .catch(function(e){ if (relogin(e, loadSettings)) return; $('staffMsg').className = 'msg err'; $('staffMsg').textContent = e.message; if ($('staffAdd')) $('staffAdd').disabled = false; });
 }
 </script>
 <script src="https://accounts.google.com/gsi/client" async></script>
