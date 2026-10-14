@@ -52,6 +52,14 @@ button{font:inherit;border:0;border-radius:8px;padding:10px 16px;cursor:pointer}
 .tag.done{background:#e7f6ef;color:#1a6b49}
 .yh{font-size:14px;font-weight:600;color:var(--muted);margin:14px 2px 8px}
 #gbtn{min-height:44px;margin:12px 0}
+.srch{margin-top:12px;border-top:1px dashed var(--line);padding-top:4px}
+.srch input{width:100%;font:inherit;padding:10px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink)}
+.sugg{list-style:none;margin:6px 0 0;padding:0;border:1px solid var(--line);border-radius:8px;max-height:320px;overflow:auto;background:#fff}
+.sugg li+li{border-top:1px solid var(--line)}
+.sugg button{display:flex;justify-content:space-between;align-items:baseline;gap:10px;width:100%;text-align:left;background:#fff;border-radius:0;padding:11px 12px;color:var(--ink)}
+.sugg button:hover,.sugg button:focus-visible{background:#e8f1fb}
+.sugg small{color:var(--muted);white-space:nowrap}
+.rm{background:none;color:var(--muted);padding:2px 6px;font-size:13px;text-decoration:underline}
 .overlay{position:fixed;inset:0;background:rgba(20,30,45,.45);display:flex;align-items:center;justify-content:center;padding:16px;z-index:10}
 .overlay .panel{max-width:420px;width:100%}
 </style></head>
@@ -79,6 +87,12 @@ button{font:inherit;border:0;border-radius:8px;padding:10px 16px;cursor:pointer}
     <select id="yr"><option value="" disabled selected hidden>— เลือกชั้นปี —</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option></select>
     <p><button class="primary" id="load">แสดงรายชื่อ</button> <span id="loadMsg" class="hint" role="status"></span></p>
     <div class="hint" id="micHint"></div>
+    <div class="srch">
+      <label for="q">หรือค้นหานักเรียนรายบุคคล (ไม่ต้องรู้ชั้นปีหรือกลุ่ม)</label>
+      <input type="search" id="q" placeholder="พิมพ์ชื่อหรือนามสกุลบางส่วน เช่น กฤติน หรือ ไชยมงคล" autocomplete="off" aria-controls="sugg">
+      <ul class="sugg hidden" id="sugg" aria-label="รายชื่อที่ตรงกับคำค้น"></ul>
+      <div class="hint" id="qMsg" role="status" style="margin-top:4px"></div>
+    </div>
   </div>
   <div id="list"></div>
 </div>
@@ -190,14 +204,17 @@ $('load').onclick = function loadList(){
 var SEL = {};   // กลุ่มที่เลือกประเมิน
 /* ปี 1–3 แสดงทั้งชั้น ไม่แบ่งกลุ่ม · ปี 4 กลุ่ม 1–4 (กลุ่มย่อย .1–.2) · ปี 5 กลุ่ม 1–4 · ปี 6 กลุ่ม 1–8 (กลุ่มย่อย .1–.4) */
 function grpOf(s){ var y = +s.year; if (y <= 3) return ''; return String(s.group || '').trim().replace(/^(gr|g)\s*/i, '').replace(/\s+/g, '').replace('/', '.'); }
-function gkey(s){ return s.year + '|' + grpOf(s); }
+function gkey(s){ return s.ind ? (s.removed ? '' : 'IND') : s.year + '|' + grpOf(s); }
 function render(r){
   if (!r) return;
-  ctx = r; students = r.students; SEL = {};
+  keepInd();
+  var inds = students.filter(function(s){ return s.ind && !s.removed; });
+  ctx = r; students = r.students.concat(inds); SEL = {}; if (inds.length) SEL.IND = 1;
   $('loadMsg').textContent = r.note || '';
-  if(!students.length){ $('list').innerHTML = '<div class="panel">'+($('yr').value ? 'ไม่พบรายชื่อนักเรียนชั้นปีนี้' : 'กรุณาเลือกชั้นปีด้านบน')+'</div>'; $('bar').classList.add('hidden'); return; }
+  if(!r.students.length){ var msg = '<div class="panel">'+($('yr').value ? 'ไม่พบรายชื่อนักเรียนชั้นปีนี้' : 'กรุณาเลือกชั้นปีด้านบน')+'</div>';
+    $('list').innerHTML = indHtml() + msg; $('bar').classList.toggle('hidden', !inds.length); counts(); return; }
   var groups = [], gm = {};
-  students.forEach(function(s,i){ var k = gkey(s); if (!gm[k]) { gm[k] = { k:k, year:s.year, group:grpOf(s), idx:[], here:0, done:0 }; groups.push(gm[k]); }
+  students.forEach(function(s,i){ if (s.ind) return; var k = gkey(s); if (!gm[k]) { gm[k] = { k:k, year:s.year, group:grpOf(s), idx:[], here:0, done:0 }; groups.push(gm[k]); }
     var g = gm[k]; g.idx.push(i); if (s.inRot) g.here++; if (s.done) g.done++; });
   groups.sort(function(a,b){ return a.year.localeCompare(b.year) || (a.group === '') - (b.group === '') || a.group.localeCompare(b.group, 'th', {numeric:true}); });
   groups.forEach(function(g){ if (g.here || g.done || +g.year <= 3) SEL[g.k] = 1; });
@@ -215,16 +232,18 @@ function render(r){
       (g.here ? '<span class="tag">📍 อยู่ภาควิชานี้สัปดาห์นี้</span>' : '')+(g.done ? '<span class="tag done">ส่งแล้ว '+g.done+' คน</span>' : '')+
       '<span class="gn">'+g.idx.length+' คน</span></label><div class="gb">'+g.idx.map(card).join('')+'</div></section>';
   });
-  $('list').innerHTML = html;
+  $('list').innerHTML = indHtml() + html;
   $('bar').classList.remove('hidden'); counts();
 }
 $('yr').onchange = function(){ $('load').onclick(); };
-$('dept').onchange = function(){ $('yr').value = ''; $('list').innerHTML = ''; $('bar').classList.add('hidden'); $('load').onclick(); };
+$('dept').onchange = function(){ $('yr').value = ''; keepInd(); ctx = null; students = students.filter(function(s){ return s.ind && !s.removed; }); SEL = students.length ? { IND: 1 } : {};
+  $('list').innerHTML = indHtml(); $('bar').classList.toggle('hidden', !students.length); counts(); $('load').onclick(); };
 function pick(gi, on){ var el = $('g'+gi); el.classList.toggle('on', on); if (on) SEL[el.dataset.k] = 1; else delete SEL[el.dataset.k]; counts(); }
 function chosen(i){ return !!SEL[gkey(students[i])]; }
 function card(i){
   var s = students[i], cur = s.status || 'ปกติ';
-  return '<div class="stu'+(cur!=='ปกติ'?' flag':'')+'" id="c'+i+'"><div class="top"><span class="name">'+esc(s.name)+'</span><span class="id">'+esc(s.id)+' · ปี '+esc(s.year)+'</span></div>'+
+  return '<div class="stu'+(cur!=='ปกติ'?' flag':'')+'" id="c'+i+'"><div class="top"><span class="name">'+esc(s.name)+'</span><span class="id">'+esc(s.id)+' · ปี '+esc(s.year)+(s.ind && s.group ? ' · กลุ่ม '+esc(s.group) : '')+
+    (s.ind ? ' <button type="button" class="rm" onclick="rmInd('+i+')">นำออก</button>' : '')+'</span></div>'+
     '<div class="seg" role="radiogroup" aria-label="สถานะ '+esc(s.name)+'">'+ST.map(function(o,k){var id='r'+i+'_'+k;return '<input type="radio" class="o'+k+'" name="s'+i+'" id="'+id+'" value="'+o+'"'+(o===cur?' checked':'')+' onchange="chg('+i+')"><label for="'+id+'">'+o+'</label>';}).join('')+'</div>'+
     '<div class="act'+(NEEDC[cur]?'':' hidden')+'" id="a'+i+'" role="radiogroup" aria-label="การดำเนินการ"><span class="lbl">การดำเนินการ *</span><div class="seg">'+
     ACT.map(function(o,k){var id='x'+i+'_'+k;return '<input type="radio" class="a'+k+'" name="x'+i+'" id="'+id+'" value="'+o+'"'+(o===s.action?' checked':'')+'><label for="'+id+'">'+o+'</label>';}).join('')+'</div></div>'+
@@ -234,7 +253,7 @@ function card(i){
 function val(i){ var x = document.querySelector('input[name=s'+i+']:checked'); return x ? x.value : 'ปกติ'; }
 function chg(i){ $('c'+i).classList.toggle('flag', val(i)!=='ปกติ'); $('a'+i).classList.toggle('hidden', !NEEDC[val(i)]); counts(); }
 function act(i){ var x = document.querySelector('input[name=x'+i+']:checked'); return x ? x.value : ''; }
-function counts(){ var c={}, n=0; students.forEach(function(s,i){ if(!chosen(i)) return; n++; var v=val(i);c[v]=(c[v]||0)+1;});
+function counts(){ var c={}, n=0, ii={}; students.forEach(function(s,i){ if (s.ind && chosen(i)) ii[s.id]=1; }); students.forEach(function(s,i){ if(!chosen(i) || (!s.ind && ii[s.id])) return; n++; var v=val(i);c[v]=(c[v]||0)+1;});
   $('counts').textContent = n ? 'เลือก '+Object.keys(SEL).length+' กลุ่ม '+n+' คน · '+ST.filter(function(o){return c[o];}).map(function(o){return o+' '+c[o];}).join(' · ') : 'ยังไม่ได้เลือกกลุ่ม';
   $('submit').disabled = !n; }
 
@@ -256,8 +275,10 @@ function mic(i){
 /* ---------- ส่ง ---------- */
 $('submit').onclick = function send(){
   if (rec) rec.stop();
-  var rows = [], bad = 0, first = -1;
-  students.forEach(function(s,i){ if (!chosen(i)) return; var v = val(i), c = $('t'+i).value.trim(); $('e'+i).textContent='';
+  var rows = [], bad = 0, first = -1, dept = ctx ? ctx.dept : $('dept').value, wk = ctx ? ctx.week : $('week').value, indIds = {};
+  if (!dept || !wk) { $('counts').textContent = 'กรุณาเลือกภาควิชาที่จัดการเรียนการสอนและสัปดาห์ก่อนส่ง'; window.scrollTo(0,0); return; }
+  students.forEach(function(s,i){ if (s.ind && chosen(i)) indIds[s.id] = 1; });
+  students.forEach(function(s,i){ if (!chosen(i) || (!s.ind && indIds[s.id])) return; var v = val(i), c = $('t'+i).value.trim(); $('e'+i).textContent='';
     var a = NEEDC[v] ? act(i) : '', miss = [];
     if(NEEDC[v] && !c) miss.push('ใส่ความเห็น');
     if(NEEDC[v] && !a) miss.push('เลือกการดำเนินการ');
@@ -266,14 +287,50 @@ $('submit').onclick = function send(){
   if(!rows.length){ $('counts').textContent = 'กรุณาติ๊กเลือกอย่างน้อย 1 กลุ่ม'; return; }
   if(bad){ $('c'+first).scrollIntoView({behavior:'smooth', block:'center'}); $('counts').textContent = 'มี '+bad+' คนที่ยังกรอกไม่ครบ'; return; }
   $('submit').disabled = true; $('submit').textContent = 'กำลังส่ง...';
-  api('save', { payload: {dept: ctx.dept, week: ctx.week, rows: rows} }, send).then(function(r){
+  api('save', { payload: {dept: dept, week: wk, rows: rows} }, send).then(function(r){
       $('app').classList.add('hidden'); $('bar').classList.add('hidden');
       $('done').innerHTML = '<b>ส่งเรียบร้อย ขอบคุณครับ/ค่ะ</b><br>'+esc(r.message)+'<p><button class="ghost" onclick="again()">ประเมินภาควิชา/สัปดาห์อื่น</button></p>';
       $('done').classList.remove('hidden'); window.scrollTo(0,0);
     }).catch(function(e){ if (!e.handled) { $('counts').textContent = e.message; } })
     .then(function(){ $('submit').textContent='ส่งการประเมิน'; counts(); });
 };
-function again(){ $('done').classList.add('hidden'); $('list').innerHTML=''; $('loadMsg').textContent=''; $('app').classList.remove('hidden'); window.scrollTo(0,0); }
+/* ---------- ค้นหาและประเมินรายบุคคล (ไม่ต้องรู้ชั้นปี/กลุ่ม) ---------- */
+var qTimer = null, qSeq = 0;
+$('q').oninput = function(){ clearTimeout(qTimer); var v = this.value.trim();
+  if (v.replace(/\s+/g,'').length < 2){ qSeq++; $('sugg').classList.add('hidden'); $('qMsg').textContent = v ? 'พิมพ์อย่างน้อย 2 ตัวอักษร' : ''; return; }
+  qTimer = setTimeout(function(){ findStu(v); }, 300); };
+$('q').onkeydown = function(e){ if (e.key === 'Enter'){ e.preventDefault(); var b = $('sugg').querySelector('button'); if (b && !$('sugg').classList.contains('hidden')) b.click(); } };
+function findStu(v){ var my = ++qSeq; $('qMsg').textContent = 'กำลังค้นหา...';
+  api('find', { q: v }, function(){ findStu(v); }).then(function(r){ if (my !== qSeq) return;
+    $('qMsg').textContent = r.total ? (r.total > r.rows.length ? 'พบ '+r.total+' คน แสดง '+r.rows.length+' คนแรก — พิมพ์เพิ่มให้แคบลง' : 'พบ '+r.total+' คน — แตะชื่อเพื่อเพิ่มในรายการประเมิน') : 'ไม่พบนักเรียนที่กำลังศึกษาชื่อนี้';
+    $('sugg').innerHTML = r.rows.map(function(s){ return '<li><button type="button"><span>'+esc(s.name)+'</span><small>'+esc(s.id)+' · ปี '+esc(s.year)+(s.group ? ' · กลุ่ม '+esc(s.group) : '')+'</small></button></li>'; }).join('');
+    $('sugg').classList.toggle('hidden', !r.rows.length);
+    [].forEach.call($('sugg').querySelectorAll('button'), function(b,k){ b.onclick = function(){ addInd(r.rows[k]); }; });
+  }).catch(function(e){ if (!e.handled && my === qSeq) $('qMsg').textContent = e.message; });
+}
+function keepInd(){ students.forEach(function(s,i){ if (s.ind && !s.removed && $('c'+i)){ s.status = val(i); s.comment = $('t'+i).value; s.action = act(i); } }); }
+function indCount(){ return students.filter(function(s){ return s.ind && !s.removed; }).length; }
+function indHtml(){
+  var idx = []; students.forEach(function(s,i){ if (s.ind && !s.removed) idx.push(i); });
+  if (!idx.length) return '';
+  return '<section class="grp on" id="indSec"><div class="gh"><span class="gt">ประเมินเฉพาะบุคคล</span><span class="gn" id="indN">'+idx.length+' คน</span></div><div class="gb" id="indBody">'+idx.map(card).join('')+'</div></section>';
+}
+function addInd(s){
+  var have = -1; students.forEach(function(x,i){ if (x.ind && !x.removed && x.id === s.id) have = i; });
+  $('sugg').classList.add('hidden'); $('q').value = ''; qSeq++;
+  if (have >= 0){ $('c'+have).scrollIntoView({behavior:'smooth', block:'center'}); $('qMsg').textContent = s.name+' อยู่ในรายการเฉพาะบุคคลแล้ว'; return; }
+  var inRoster = students.some(function(x){ return !x.ind && x.id === s.id; });
+  students.push({ id: s.id, name: s.name, year: s.year, group: s.group, status: '', comment: '', action: '', ind: true });
+  var i = students.length - 1; SEL.IND = 1;
+  if (!$('indSec')) $('list').insertAdjacentHTML('afterbegin', '<section class="grp on" id="indSec"><div class="gh"><span class="gt">ประเมินเฉพาะบุคคล</span><span class="gn" id="indN"></span></div><div class="gb" id="indBody"></div></section>');
+  $('indBody').insertAdjacentHTML('beforeend', card(i)); $('indN').textContent = indCount()+' คน';
+  $('qMsg').textContent = 'เพิ่ม '+s.name+' แล้ว'+(inRoster ? ' (มีชื่อในกลุ่มด้านล่างด้วย — ระบบจะส่งผลจากช่องเฉพาะบุคคลแทน)' : '')+(ctx || $('dept').value ? '' : ' · อย่าลืมเลือกภาควิชาก่อนส่ง');
+  $('bar').classList.remove('hidden'); counts(); $('c'+i).scrollIntoView({behavior:'smooth', block:'center'});
+}
+function rmInd(i){ students[i].removed = true; var el = $('c'+i); if (el) el.remove();
+  if (!indCount()) { var sec = $('indSec'); if (sec) sec.remove(); delete SEL.IND; if (!ctx) $('bar').classList.add('hidden'); } else $('indN').textContent = indCount()+' คน';
+  counts(); }
+function again(){ students = []; SEL = {}; $('done').classList.add('hidden'); $('list').innerHTML=''; $('loadMsg').textContent=''; $('app').classList.remove('hidden'); window.scrollTo(0,0); }
 window.addEventListener('beforeunload', function(e){ if (!$('bar').classList.contains('hidden') && !$('submit').disabled) { e.preventDefault(); e.returnValue=''; } });
 </script>
 <script src="https://accounts.google.com/gsi/client" async></script>
