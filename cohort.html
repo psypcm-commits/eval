@@ -30,8 +30,9 @@ select,input[type=search]{font:inherit;padding:8px 10px;border:1px solid var(--l
 .legend{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--muted);margin:2px 2px 10px}
 .legend span{display:inline-flex;align-items:center;gap:6px}
 .st{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:5px;font-size:12px;line-height:1;color:#1d2733;flex:none}
-.st.s-โดดเด่น{background:var(--good);color:#fff}.st.s-ปกติ{background:var(--normal);color:#fff}.st.s-ติดตาม{background:var(--warn);color:#fff}
+.st.s-โดดเด่น{background:var(--good);color:#fff}.st.s-อยู่ในเกณฑ์{background:var(--normal);color:#fff}.st.s-ติดตาม{background:var(--warn);color:#fff}
 .st.s-เฝ้าระวัง{background:var(--serious);color:#fff}.st.s-ไม่จบรายวิชา{background:var(--crit);color:#fff}
+.st.s-ไม่สามารถประเมินได้{background:#000;color:#fff;box-shadow:inset 0 0 0 1px #8a96a3}
 .st.none{background:var(--none);border:1px solid var(--line)}.st.future{background:var(--future);border:1px dashed var(--faint)}
 .st.now{box-shadow:0 0 0 2px var(--card),0 0 0 4px var(--brand2)}
 .tablewrap{overflow-x:auto;background:var(--card);border:1px solid var(--line);border-radius:10px}
@@ -83,9 +84,9 @@ td.name b{display:block;font-weight:600}td.name small{color:var(--muted)}
     <input type="search" id="q" placeholder="ค้นหาชื่อหรือรหัส" aria-label="ค้นหาชื่อหรือรหัส">
   </div>
   <div class="tiles" id="tiles"></div>
-  <div class="legend" aria-label="คำอธิบายสัญลักษณ์">
-    <span><i class="st s-โดดเด่น">★</i>โดดเด่น</span><span><i class="st s-ปกติ"></i>ปกติ</span><span><i class="st s-ติดตาม">●</i>ติดตาม</span>
-    <span><i class="st s-เฝ้าระวัง">▲</i>เฝ้าระวัง</span><span><i class="st s-ไม่จบรายวิชา">■</i>ไม่จบรายวิชา</span>
+  <div class="legend" aria-label="คำอธิบายสี">
+    <span><i class="st s-โดดเด่น"></i>โดดเด่น</span><span><i class="st s-อยู่ในเกณฑ์"></i>อยู่ในเกณฑ์</span><span><i class="st s-ติดตาม"></i>ติดตาม</span>
+    <span><i class="st s-เฝ้าระวัง"></i>เฝ้าระวัง</span><span><i class="st s-ไม่จบรายวิชา"></i>ไม่จบรายวิชา</span><span><i class="st s-ไม่สามารถประเมินได้"></i>ไม่สามารถประเมินได้</span>
     <span><i class="st none"></i>จบ rotation แล้วแต่ยังไม่มีผล</span><span><i class="st future"></i>ยังไม่ถึง</span><span><i class="st future now"></i>กำลังหมุนเวียน</span>
   </div>
   <div class="tablewrap"><table aria-label="ตารางนักเรียนรายชั้นปี">
@@ -101,8 +102,11 @@ var CONFIG = {
   CLIENT_ID: '731005120812-6qqtlt9a6sudckuuk8u2jpg13idm48ml.apps.googleusercontent.com',
   API: 'https://script.google.com/macros/s/AKfycbzqqvwnWpXkOnO27C5lhck5iivB73IQeTJr5BK2dinsEJl7aXfXtA-8YGbIaT9Ei2lmpg/exec'
 };
-var ICON = {'โดดเด่น':'★','ปกติ':'','ติดตาม':'●','เฝ้าระวัง':'▲','ไม่จบรายวิชา':'■'}, CONCERN = {'ติดตาม':1,'เฝ้าระวัง':1,'ไม่จบรายวิชา':1};
-var SEV = {'ไม่จบรายวิชา':4,'เฝ้าระวัง':3,'ติดตาม':2,'ปกติ':1,'โดดเด่น':0};
+/* ใช้สีแทนสัญลักษณ์ · "อยู่ในเกณฑ์" เดิมชื่อ "ปกติ" · "ไม่สามารถประเมินได้" (ดำ) ไม่ใช่ข้อกังวล และไม่ทับผลประเมินอื่นในช่องเดียวกัน */
+var ICON = {}, CONCERN = {'ติดตาม':1,'เฝ้าระวัง':1,'ไม่จบรายวิชา':1};
+var SEV = {'ไม่จบรายวิชา':4,'เฝ้าระวัง':3,'ติดตาม':2,'อยู่ในเกณฑ์':1,'โดดเด่น':0,'ไม่สามารถประเมินได้':-1};
+function norm(s){ s = String(s==null?'':s).trim(); return s === 'ปกติ' ? 'อยู่ในเกณฑ์' : s; }
+function ic(s){ return ICON[s] || ''; }
 var $ = function(id){ return document.getElementById(id); };
 var idToken = '', DATA = null, MODEL = [], FOCUS = '', pending = null;
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
@@ -142,7 +146,7 @@ function build(){
   d.students.forEach(function(s){ by[s.id] = { s:s, rot:[], rat:[], grp:'' }; });
   d.rotation.forEach(function(r){ var x = by[r[0]]; if(!x) return; var m = /กลุ่ม\s*(\d+)/.exec(r[2]);
     if (m) x.grp = m[1]; x.rot.push({ dept:r[1], course:r[2].replace(/\s*·\s*กลุ่ม.*$/,''), start:r[3], end:r[4], rat:[] }); });
-  d.ratings.forEach(function(r){ var x = by[r[0]]; if(!x) return; x.rat.push({ dept:r[1], week:r[2], status:r[3], comment:r[4], review:r[5], by:r[6], action:r[7]||'' }); });
+  d.ratings.forEach(function(r){ var x = by[r[0]]; if(!x) return; x.rat.push({ dept:r[1], week:r[2], status:norm(r[3]), comment:r[4], review:r[5], by:r[6], action:r[7]||'' }); });
   var depts = {};
   MODEL = Object.keys(by).map(function(k){ var x = by[k];
     x.rot.sort(function(a,b){ return a.start < b.start ? -1 : 1; });
@@ -207,22 +211,22 @@ function render(){
 }
 function cellFor(r){
   var today = DATA.today, a = r.rat.filter(inRange), worst = null;
-  a.forEach(function(x){ if (!worst || SEV[x.status] > SEV[worst.status] || (x.status === 'โดดเด่น' && worst.status === 'ปกติ')) worst = x; });
+  a.forEach(function(x){ if (!worst || SEV[x.status] > SEV[worst.status] || (x.status === 'โดดเด่น' && worst.status === 'อยู่ในเกณฑ์')) worst = x; });
   var tip = short(r.dept) + ' · ' + r.course + '\n' + thd(r.start) + ' – ' + thd(r.end);
   if (r.start > today) return '<i class="st future" title="'+esc(tip+'\nยังไม่ถึง')+'"></i>';
   if (r.end >= today) return '<i class="st future now" title="'+esc(tip+'\nกำลังหมุนเวียน')+'"></i>';
   if (!worst) return '<i class="st none" title="'+esc(tip+'\nยังไม่มีผลประเมิน')+'"></i>';
-  return '<i class="st s-'+worst.status+'" title="'+esc(tip+'\n'+worst.status+(worst.comment?'\n'+worst.comment.replace(/^\[ข้อมูลสมมติ\]\s*/,''):''))+'">'+ICON[worst.status]+'</i>';
+  return '<i class="st s-'+worst.status+'" title="'+esc(tip+'\n'+worst.status+(worst.comment?'\n'+worst.comment.replace(/^\[ข้อมูลสมมติ\]\s*/,''):''))+'">'+ic(worst.status)+'</i>';
 }
 function rowHtml(x){
   var st = x.st, ev = st.events.slice().sort(function(a,b){ return SEV[b.status]-SEV[a.status]; });
-  var evh = ev.slice(0,8).map(function(a){ return '<i class="st s-'+a.status+'" title="'+esc(short(a.dept)+': '+a.status)+'">'+ICON[a.status]+'</i>'; }).join('') + (ev.length > 8 ? '<span>+'+(ev.length-8)+'</span>' : '') + (ev.length ? '' : '<span>—</span>');
+  var evh = ev.slice(0,8).map(function(a){ return '<i class="st s-'+a.status+'" title="'+esc(short(a.dept)+': '+a.status)+'">'+ic(a.status)+'</i>'; }).join('') + (ev.length > 8 ? '<span>+'+(ev.length-8)+'</span>' : '') + (ev.length ? '' : '<span>—</span>');
   var rev = st.pendingRev ? '<span class="pill wait">รอทบทวน '+st.pendingRev+'</span>' : st.reviewed ? '<span class="pill done">ทบทวนแล้ว</span>' : '<span class="hint">—</span>';
   return '<tr data-id="'+esc(x.s.id)+'" tabindex="0"><td class="name"><b>'+esc(x.s.name)+'</b><small>'+esc(x.s.id)+(x.grp?' · กลุ่ม '+esc(x.grp):'')+'</small></td>'+
     '<td><div class="journey" aria-label="เส้นทาง rotation">'+x.rot.map(cellFor).join('')+'</div></td>'+
     '<td><div class="ev">'+evh+'</div></td>'+
     '<td class="num">'+(st.concernDepts ? st.concernDepts+' ภาค' : '<span class="hint">—</span>')+'</td>'+
-    '<td>'+rev+'</td><td class="num">'+(st.stars ? '★ '+st.stars : '<span class="hint">—</span>')+'</td></tr>';
+    '<td>'+rev+'</td><td class="num">'+(st.stars ? st.stars+' ครั้ง' : '<span class="hint">—</span>')+'</td></tr>';
 }
 ['dept','range','sort'].forEach(function(id){ $(id).onchange = render; });
 $('q').oninput = render;
@@ -236,16 +240,16 @@ function openStudent(id){
   var items = x.rot.map(function(r){
     var fut = r.start > today, now = !fut && r.end >= today;
     var dot = fut || now ? '<i class="st future'+(now?' now':'')+' dot"></i>' : (function(){
-      var w = null; r.rat.forEach(function(a){ if (!w || SEV[a.status] > SEV[w.status] || (a.status==='โดดเด่น'&&w.status==='ปกติ')) w = a; });
-      return w ? '<i class="st s-'+w.status+' dot">'+ICON[w.status]+'</i>' : '<i class="st none dot"></i>'; })();
+      var w = null; r.rat.forEach(function(a){ if (!w || SEV[a.status] > SEV[w.status] || (a.status==='โดดเด่น'&&w.status==='อยู่ในเกณฑ์')) w = a; });
+      return w ? '<i class="st s-'+w.status+' dot">'+ic(w.status)+'</i>' : '<i class="st none dot"></i>'; })();
     var body = r.rat.map(function(a){
-      return '<div class="c"><span class="st s-'+a.status+'" style="width:auto;padding:0 6px;height:20px">'+(ICON[a.status]?ICON[a.status]+' ':'')+esc(a.status)+'</span>'+(a.action ? ' <span class="pill">'+esc(a.action)+'</span>' : '')+
+      return '<div class="c"><span class="st s-'+a.status+'" style="width:auto;padding:0 6px;height:20px">'+esc(a.status)+'</span>'+(a.action ? ' <span class="pill">'+esc(a.action)+'</span>' : '')+
         (a.comment ? '<div style="margin-top:6px">'+esc(a.comment)+'</div>' : '')+
         '<div class="by">สัปดาห์ '+thd(a.week)+(a.review ? ' · '+esc(a.review) : '')+' · '+esc(a.by)+'</div></div>'; }).join('');
     if (!body) body = '<div class="d">'+(fut ? 'ยังไม่ถึง' : now ? 'กำลังหมุนเวียนอยู่' : 'ยังไม่มีผลประเมินจากภาควิชา')+'</div>';
     return '<li class="'+(fut?'fut':'')+'">'+dot+'<div class="t">'+esc(short(r.dept))+'</div><div class="d">'+esc(r.course)+' · '+thd(r.start)+' – '+thd(r.end)+'</div>'+body+'</li>';
   });
-  x.other.forEach(function(a){ items.push('<li><i class="st s-'+a.status+' dot">'+ICON[a.status]+'</i><div class="t">'+esc(short(a.dept))+'</div><div class="d">นอกตาราง rotation · สัปดาห์ '+thd(a.week)+'</div>'+
+  x.other.forEach(function(a){ items.push('<li><i class="st s-'+a.status+' dot">'+ic(a.status)+'</i><div class="t">'+esc(short(a.dept))+'</div><div class="d">นอกตาราง rotation · สัปดาห์ '+thd(a.week)+'</div>'+
     '<div class="c">'+esc(a.status)+(a.comment?' — '+esc(a.comment):'')+'</div></li>'); });
   $('dBody').innerHTML = '<div class="minis"><div class="mini"><div class="n num">'+st.concernDepts+'</div><div class="q">ภาควิชาที่มีข้อกังวล</div></div>'+
     '<div class="mini"><div class="n num">'+st.pendingRev+'</div><div class="q">เรื่องรอทบทวน</div></div>'+
