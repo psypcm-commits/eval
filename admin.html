@@ -88,6 +88,14 @@ dialog .bd{padding:14px 16px;max-height:68vh;overflow:auto}dialog .ft{padding:12
 #gbtn{min-height:44px;margin:12px 0}
 .note{font-size:12px;color:var(--muted);margin-top:8px}
 a.lnk{color:var(--brand2);cursor:pointer;text-decoration:underline}
+/* การมีส่วนร่วมของอาจารย์ */
+.cbar{display:flex;height:16px;border-radius:4px;overflow:hidden;background:var(--soft);min-width:120px}.cbar span{display:block;height:100%}
+.cbar .cd,.legend i.cd{background:var(--brand2)}.cbar .cn,.legend i.cn{background:repeating-linear-gradient(45deg,var(--soft),var(--soft) 4px,var(--line) 4px,var(--line) 8px)}
+.covtop{display:flex;gap:16px;align-items:center;margin-bottom:6px}.covtop .big{font-size:40px;font-weight:700;color:var(--brand2);line-height:1}.covtop .grow{flex:1}
+.covlist,.pplist{display:grid;gap:8px;margin-top:10px}
+.covrow,.pprow{display:grid;grid-template-columns:minmax(120px,200px) minmax(0,1fr) 170px;gap:10px;align-items:center}
+.covrow .cv,.pprow .pv{font-size:13px;text-align:right}.pprow .bar{height:16px}.pprow.all{padding-bottom:8px;border-bottom:1px solid var(--line)}
+@media(max-width:600px){.covrow,.pprow{grid-template-columns:1fr 90px}.covrow .cl,.pprow .pl{grid-column:1/-1}}
 /* ภาพรวมชั้นปี */
 .ovtiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:12px}
 .ovtiles .tile{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px}.ovtiles .tile .n{font-size:30px}.ovtiles .tile .q{font-size:14px}
@@ -779,21 +787,49 @@ function openRoundNote(id){
 }
 
 /* ---------- การมีส่วนร่วมของอาจารย์ ---------- */
+/* ชุด ค: กราฟ ผ่านรายวิชาแล้ว vs ได้รับการประเมิน (รวม + รายภาควิชา) · สัดส่วนผลที่อาจารย์แต่ละคนให้ · ตัวกรองสังกัด (ที่เลือกตอนส่ง) · ตารางเดิม */
+var TD = null, TAF = '';
 $('tGo').onclick = loadTeach;
 function loadTeach(){
   LOADED.teach = true; $('teachBody').innerHTML = '<div class="panel empty">กำลังโหลด...</div>';
-  api('adm_teachers', { from: $('tFrom').value, to: $('tTo').value }).then(function(d){
-    $('teachBody').innerHTML =
-      '<div class="panel"><h3>การส่งรายอาจารย์ ('+d.teachers.length+' คน)</h3>'+(d.teachers.length ? '<div class="tablewrap"><table><thead><tr><th>อาจารย์</th><th>ภาควิชาที่ส่ง</th><th class="num">ครั้งที่ส่ง</th><th class="num">บันทึก</th><th class="num">นักเรียน (คน)</th><th class="num">ข้อกังวล (บันทึก)</th><th class="num">ไม่สามารถประเมินได้</th><th>ส่งล่าสุด</th></tr></thead><tbody>'+
-        d.teachers.map(function(t){ return '<tr><td>'+(t.name?esc(t.name)+'<div class="hint">'+esc(t.email)+'</div>':esc(t.email))+'</td><td>'+t.depts.map(function(x){ return esc(short(x)); }).join(', ')+'</td>'+
-          '<td class="num">'+t.submissions+'</td><td class="num">'+t.records+'</td><td class="num">'+t.students+'</td><td class="num">'+t.concerns+'</td><td class="num">'+(t.na||'<span class="hint">0</span>')+'</td><td>'+thd(t.last)+'</td></tr>'; }).join('')+'</tbody></table></div>' : '<div class="hint">ไม่มีการส่งในช่วงนี้</div>')+
-        '<div class="note">ครั้งที่ส่ง = ภาควิชา × สัปดาห์ · บันทึก = ผลประเมินรายคน (ไม่นับที่แทนที่แล้ว) · นักเรียน = จำนวนคนไม่ซ้ำ</div></div>'+
-      '<div class="panel"><h3>การส่งครบรายภาควิชา</h3>'+(d.depts.length ? '<div class="tablewrap"><table><thead><tr><th>ภาควิชา</th><th class="num">ต้องประเมิน</th><th class="num">ประเมินแล้ว</th><th class="num">ส่งครบ</th><th></th><th class="num">ไม่สามารถประเมินได้ (บันทึก)</th></tr></thead><tbody>'+
-        d.depts.map(function(x){ return '<tr><td>'+esc(short(x.dept))+'</td><td class="num">'+x.due+'</td><td class="num">'+x.done+'</td><td class="num">'+(x.pct==null?'—':x.pct+'%')+'</td><td><div class="meter"><span style="width:'+(x.pct||0)+'%"></span></div></td><td class="num">'+(x.records ? (x.na||0)+' / '+x.records+' ('+Math.round((x.na||0)*100/x.records)+'%)' : '<span class="hint">—</span>')+'</td></tr>'; }).join('')+'</tbody></table></div>'
-        : '<div class="nosrc">ยังไม่มีฐานคำนวณในช่วงนี้ (ไม่มี rotation ที่สิ้นสุดแล้วในตารางหมุนเวียน) จึงไม่แสดงเปอร์เซ็นต์</div>')+
-        '<div class="note">ฐาน = นักเรียน 1 คน × 1 rotation ที่สิ้นสุดแล้วในช่วงที่เลือก (หน่วย: คน-rotation) · นับว่าประเมินแล้วเมื่อมีผลประเมินจากภาควิชานั้นระหว่างช่วง rotation ถึง 2 สัปดาห์หลังสิ้นสุด (รวม "ไม่สามารถประเมินได้" ว่าส่งแล้ว)</div></div>';
-  }).catch(function(e){ if (relogin(e, loadTeach)) return; $('teachBody').innerHTML = '<div class="panel empty">'+esc(e.message)+'</div>'; });
+  api('adm_teachers', { from: $('tFrom').value, to: $('tTo').value }).then(function(d){ TD = d; renderTeach(); })
+    .catch(function(e){ if (relogin(e, loadTeach)) return; $('teachBody').innerHTML = '<div class="panel empty">'+esc(e.message)+'</div>'; });
 }
+function cFull(c){ var o = {}; STAT.forEach(function(s){ o[s] = 0; }); Object.keys(c||{}).forEach(function(k){ var n = norm(k); if (o[n] != null) o[n] += c[k]; }); return o; }
+function covBar(done, due){ var p = due ? done*100/due : 0;
+  return '<div class="cbar" title="ประเมินแล้ว '+done+' · ยังไม่ประเมิน '+(due-done)+'"><span class="cd" style="width:'+p+'%"></span><span class="cn" style="width:'+(100-p)+'%"></span></div>'; }
+function renderTeach(){
+  var d = TD, tot = d.total || { due:0, done:0, pct:null };
+  var afs = {}; d.teachers.forEach(function(t){ afs[t.affil || ''] = 1; });
+  var afList = Object.keys(afs).sort(function(a,b){ return (a==='') - (b==='') || short(a).localeCompare(short(b),'th'); });
+  if (TAF && !afs[TAF === '-' ? '' : TAF]) TAF = '';
+  var ts = d.teachers.filter(function(t){ return !TAF || (t.affil || '') === (TAF === '-' ? '' : TAF); });
+  var allC = cFull({}); ts.forEach(function(t){ var c = cFull(t.c); STAT.forEach(function(s){ allC[s] += c[s]; }); });
+  var nRec = 0; STAT.forEach(function(s){ nRec += allC[s]; });
+  var tname = function(t){ return t.name ? esc(t.name) : esc(t.email); };
+  var afLab = function(t){ return t.affil ? esc(short(t.affil)) : '<span class="hint">ไม่ระบุสังกัด</span>'; };
+  $('teachBody').innerHTML =
+    '<div class="panel"><h3>นักเรียนที่ผ่านรายวิชาแล้ว กับที่ได้รับการประเมิน</h3>'+
+      (tot.due ? '<div class="covtop"><div class="big">'+Math.round(tot.pct)+'%</div><div class="grow">'+covBar(tot.done, tot.due)+'<div class="hint" style="margin-top:6px">ประเมินแล้ว '+tot.done+' จาก '+tot.due+' คน-rotation ที่จบแล้ว · ยังไม่ประเมิน '+(tot.due-tot.done)+'</div></div></div>'+
+        '<div class="legend"><span><i class="cd"></i>ได้รับการประเมิน</span><span><i class="cn"></i>ผ่านรายวิชาแล้วแต่ยังไม่ถูกประเมิน</span></div>'+
+        '<div class="covlist">'+d.depts.map(function(x){ return '<div class="covrow"><div class="cl">'+esc(short(x.dept))+'</div>'+covBar(x.done, x.due)+'<div class="cv">'+x.done+'/'+x.due+' <b>'+(x.pct==null?'—':Math.round(x.pct)+'%')+'</b>'+(x.records&&x.na?'<div class="hint">ประเมินไม่ได้ '+x.na+'/'+x.records+' บันทึก</div>':'')+'</div></div>'; }).join('')+'</div>'
+       : '<div class="nosrc">ยังไม่มีฐานคำนวณในช่วงนี้ (ไม่มี rotation ที่สิ้นสุดแล้วในตารางหมุนเวียน) จึงไม่แสดงเปอร์เซ็นต์</div>')+
+      '<div class="note">ฐาน = นักเรียน 1 คน × 1 rotation ที่สิ้นสุดแล้วในช่วงที่เลือก (คน-rotation) · นับว่าประเมินแล้วเมื่อมีผลจากภาควิชานั้นระหว่าง rotation ถึง 2 สัปดาห์หลังสิ้นสุด (รวม "ไม่สามารถประเมินได้") · ตารางหมุนเวียนผูกกับภาควิชา จึงแสดงได้ถึงระดับภาควิชา ไม่แยกรายอาจารย์ · เรียงจากส่งน้อยไปมาก</div></div>'+
+    '<div class="panel"><div class="ovhead"><h3>สัดส่วนระดับผลประเมินที่ให้</h3>'+
+      (afList.length > 1 || TAF ? '<label class="hint">สังกัด (ที่เลือกตอนส่ง) <select id="tAf"><option value="">ทุกสังกัด</option>'+afList.map(function(a){ var v = a || '-'; return '<option value="'+esc(v)+'"'+(TAF===v?' selected':'')+'>'+(a?esc(short(a)):'ไม่ระบุสังกัด')+'</option>'; }).join('')+'</select></label>' : '')+'</div>'+
+      '<div class="legend">'+STAT.map(function(s){ return '<span><i style="'+sw(s)+'"></i>'+s+'</span>'; }).join('')+'</div>'+
+      (ts.length ? '<div class="pplist"><div class="pprow all"><div class="pl"><b>ทุกคนรวมกัน</b><div class="hint">'+ts.length+' คน · '+nRec+' บันทึก</div></div>'+sbar(allC)+'<div class="pv">'+pctCon(allC)+'</div></div>'+
+        ts.map(function(t){ var c = cFull(t.c); return '<div class="pprow"><div class="pl">'+tname(t)+'<div class="hint">'+afLab(t)+' · '+t.records+' บันทึก</div></div>'+sbar(c)+'<div class="pv">'+pctCon(c)+'</div></div>'; }).join('')+'</div>'
+       : '<div class="hint">ไม่มีการส่งในช่วงนี้</div>')+
+      '<div class="note">1 แถบ = ผลประเมินทั้งหมดที่อาจารย์คนนั้นให้ในช่วงที่เลือก แบ่งสีตามระดับ · ตัวเลขขวา = ข้อกังวล (ติดตาม + เฝ้าระวัง + ไม่จบรายวิชา) ÷ ผลที่ประเมินได้ · สังกัด = ที่อาจารย์เลือกตอนส่งครั้งล่าสุดในช่วงนี้</div></div>'+
+    '<div class="panel"><h3>การส่งรายอาจารย์ ('+ts.length+' คน)</h3>'+(ts.length ? '<div class="tablewrap"><table><thead><tr><th>อาจารย์</th><th>สังกัด</th><th>ภาควิชาที่ส่ง</th><th class="num">ครั้งที่ส่ง</th><th class="num">บันทึก</th><th class="num">นักเรียน (คน)</th><th class="num">ข้อกังวล (บันทึก)</th><th class="num">ไม่สามารถประเมินได้</th><th>ส่งล่าสุด</th></tr></thead><tbody>'+
+      ts.map(function(t){ return '<tr><td>'+(t.name?esc(t.name)+'<div class="hint">'+esc(t.email)+'</div>':esc(t.email))+'</td><td>'+afLab(t)+'</td><td>'+t.depts.map(function(x){ return esc(short(x)); }).join(', ')+'</td>'+
+        '<td class="num">'+t.submissions+'</td><td class="num">'+t.records+'</td><td class="num">'+t.students+'</td><td class="num">'+t.concerns+'</td><td class="num">'+(t.na||'<span class="hint">0</span>')+'</td><td>'+thd(t.last)+'</td></tr>'; }).join('')+'</tbody></table></div>' : '<div class="hint">ไม่มีการส่งในช่วงนี้</div>')+
+      '<div class="note">ครั้งที่ส่ง = ภาควิชา × สัปดาห์ · บันทึก = ผลประเมินรายคน (ไม่นับที่แทนที่แล้ว) · นักเรียน = จำนวนคนไม่ซ้ำ</div></div>';
+  if ($('tAf')) $('tAf').onchange = function(){ TAF = this.value; renderTeach(); };
+}
+function pctCon(c){ var n = 0, k = 0; STAT.forEach(function(s){ if (s !== NA) n += c[s]; }); k = c['ติดตาม'] + c['เฝ้าระวัง'] + c['ไม่จบรายวิชา'];
+  return n ? 'ข้อกังวล '+Math.round(k*100/n)+'%' : '<span class="hint">—</span>'; }
 /* ---------- ตั้งค่า (เฉพาะ psypcm) ---------- */
 var STAFF_CONFIRM = '';
 function loadSettings(){
