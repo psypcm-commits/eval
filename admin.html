@@ -6,7 +6,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2316466e'/%3E%3Ccircle cx='32' cy='24' r='9' fill='white'/%3E%3Cpath d='M15 52c2-10 9-15 17-15s15 5 17 15' fill='white'/%3E%3C/svg%3E">
 <style>
 :root{--bg:#f4f6f9;--card:#fff;--ink:#1d2733;--muted:#5d6b7a;--faint:#8a96a3;--line:#dde3ea;--soft:#eef2f6;--brand:#16466e;--brand2:#1f6aa5;--hl:#e8f1fb;
---s0:#1a7f5a;--s1:#5d6b7a;--s2:#b7791f;--s3:#c62828;--s4:#6a1b9a;--err:#c62828;--ok:#1a7f5a;--warnbg:#fff3d6;--warnink:#6b4a00}
+--s0:#1a7f5a;--s1:#5d6b7a;--s2:#b7791f;--s3:#c62828;--s4:#6a1b9a;--s5:#000;--s5line:#8a96a3;--err:#c62828;--ok:#1a7f5a;--warnbg:#fff3d6;--warnink:#6b4a00}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#121416;--card:#1a1c1e;--ink:#e6e8eb;--muted:#a3adb8;--faint:#7d8792;--line:#30353a;--soft:#24282c;
 --brand:#0f2f4b;--brand2:#3b86c6;--hl:#1d2a38;--err:#ef7070;--ok:#4cc38a;--warnbg:#3d3010;--warnink:#ffd67a}}
 *{box-sizing:border-box}
@@ -42,7 +42,7 @@ nav.tabs button[aria-selected=true]{color:var(--ink);font-weight:600;border-bott
 .pill{display:inline-block;font-size:12px;padding:2px 8px;border-radius:999px;background:var(--soft);color:var(--ink);white-space:nowrap}
 .pill.warn{background:var(--warnbg);color:var(--warnink)}
 .st{display:inline-flex;align-items:center;gap:4px;font-size:13px;padding:2px 8px;border-radius:6px;color:#fff;white-space:nowrap}
-.st.s-โดดเด่น{background:var(--s0)}.st.s-ปกติ{background:var(--s1)}.st.s-ติดตาม{background:var(--s2)}.st.s-เฝ้าระวัง{background:var(--s3)}.st.s-ไม่จบรายวิชา{background:var(--s4)}
+.st.s-โดดเด่น{background:var(--s0)}.st.s-อยู่ในเกณฑ์,.st.s-ปกติ{background:var(--s1)}.st.s-ติดตาม{background:var(--s2)}.st.s-เฝ้าระวัง{background:var(--s3)}.st.s-ไม่จบรายวิชา{background:var(--s4)}.st.s-ไม่สามารถประเมินได้{background:var(--s5);box-shadow:inset 0 0 0 1px var(--s5line)}
 .prof{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start}
 .prof h2{font-size:19px;margin:0}
 .tiles{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;margin-top:12px}
@@ -152,8 +152,13 @@ var CONFIG = {
   CLIENT_ID: '731005120812-6qqtlt9a6sudckuuk8u2jpg13idm48ml.apps.googleusercontent.com',
   API: 'https://script.google.com/macros/s/AKfycbzqqvwnWpXkOnO27C5lhck5iivB73IQeTJr5BK2dinsEJl7aXfXtA-8YGbIaT9Ei2lmpg/exec'
 };
-var STAT = ['โดดเด่น','ปกติ','ติดตาม','เฝ้าระวัง','ไม่จบรายวิชา'], ICON = {'โดดเด่น':'★','ปกติ':'','ติดตาม':'●','เฝ้าระวัง':'▲','ไม่จบรายวิชา':'■'};
-var COLOR = {'โดดเด่น':'var(--s0)','ปกติ':'var(--s1)','ติดตาม':'var(--s2)','เฝ้าระวัง':'var(--s3)','ไม่จบรายวิชา':'var(--s4)'}, CONCERN = {'ติดตาม':1,'เฝ้าระวัง':1,'ไม่จบรายวิชา':1};
+/* สถานะใช้สีเป็นหลัก (ไม่ใช้สัญลักษณ์) · "อยู่ในเกณฑ์" เดิมชื่อ "ปกติ" · "ไม่สามารถประเมินได้" ไม่นับในตัวหารอัตราข้อกังวล */
+var OK = 'อยู่ในเกณฑ์', NA = 'ไม่สามารถประเมินได้';
+var STAT = ['โดดเด่น',OK,'ติดตาม','เฝ้าระวัง','ไม่จบรายวิชา',NA];
+var COLOR = {'โดดเด่น':'var(--s0)','อยู่ในเกณฑ์':'var(--s1)','ติดตาม':'var(--s2)','เฝ้าระวัง':'var(--s3)','ไม่จบรายวิชา':'var(--s4)','ไม่สามารถประเมินได้':'var(--s5)'}, CONCERN = {'ติดตาม':1,'เฝ้าระวัง':1,'ไม่จบรายวิชา':1};
+function norm(s){ s = String(s==null?'':s).trim(); return s === 'ปกติ' ? OK : s; }
+function sw(s){ return 'background:'+COLOR[s]+(s===NA?';box-shadow:inset 0 0 0 1px var(--s5line)':''); }   /* สีดำมีขอบเทา เห็นได้ในโหมดมืด */
+function rated(list){ return list.filter(function(e){ return norm(e.status) !== NA; }); }   /* ตัวหารอัตราข้อกังวล */
 var $ = function(id){ return document.getElementById(id); };
 var idToken = '', INIT = null, B = null, CUR = '', SUB = 'eval', SHOWREPL = false, pending = null;
 var PSY = { token:'', sid:'', timer:null, last:0, data:null };
@@ -162,7 +167,7 @@ var TH = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.�
 function thd(s){ s=String(s||''); if(!/^\d{4}-\d{2}-\d{2}/.test(s)) return esc(s); var p=s.slice(0,10).split('-'); return (+p[2])+' '+TH[+p[1]-1]+' '+String(+p[0]+543).slice(2)+(s.length>10?' '+s.slice(11,16):''); }
 function thm(ym){ var p=ym.split('-'); return TH[+p[1]-1]+' '+String(+p[0]+543).slice(2); }
 function short(d){ return String(d||'').replace(/^ภาควิชา/,''); }
-function stat(s){ return s ? '<span class="st s-'+esc(s)+'">'+(ICON[s]?ICON[s]+' ':'')+esc(s)+'</span>' : '<span class="hint">—</span>'; }
+function stat(s){ s = norm(s); return s ? '<span class="st s-'+esc(s)+'">'+esc(s)+'</span>' : '<span class="hint">—</span>'; }
 function dash(v){ return v===''||v==null ? '<span class="hint">—</span>' : esc(v); }
 function toast(m){ var t=$('toast'); t.textContent=m; t.classList.remove('hidden'); clearTimeout(toast.h); toast.h=setTimeout(function(){ t.classList.add('hidden'); }, 5000); }
 function rid(){ var a=new Uint8Array(12); crypto.getRandomValues(a); return Array.prototype.map.call(a,function(b){return ('0'+b.toString(16)).slice(-2);}).join(''); }
@@ -236,18 +241,19 @@ function openStudent(id, keepSub){
     if (window.innerWidth < 900) $('person').scrollIntoView({behavior:'smooth'}); })
     .catch(function(e){ if (relogin(e, function(){ openStudent(id, keepSub); })) return; $('personEmpty').textContent = e.message; });
 }
-function counts(list){ var c = {}; STAT.forEach(function(s){ c[s]=0; }); list.forEach(function(e){ if (c[e.status]!=null) c[e.status]++; }); return c; }
+function counts(list){ var c = {}; STAT.forEach(function(s){ c[s]=0; }); list.forEach(function(e){ var k = norm(e.status); if (c[k]!=null) c[k]++; }); return c; }
 function renderPerson(){
   var p = B.profile, ev = B.evals.filter(function(e){ return !e.replaced; }), c = counts(ev);
   var con = ev.filter(function(e){ return CONCERN[e.status]; }), cd = {}; con.forEach(function(e){ cd[e.department]=1; });
   var af = (B.affective||[]).slice().sort(function(a,b){ return a.acad_year < b.acad_year ? 1 : -1; })[0];
   var rv = (B.reviews||[])[0];
+  var nr = rated(ev).length;
   var tiles = [
-    [ev.length, 'บันทึก', 'ผลประเมินทั้งหมด'],
-    [con.length, 'บันทึก', 'มีข้อกังวล (●▲■)'],
-    [ev.length ? Math.round(con.length*100/ev.length)+'%' : '—', '', 'อัตราข้อกังวล'],
+    [ev.length, 'บันทึก', 'ผลประเมินทั้งหมด'+(c[NA] ? ' (ไม่สามารถประเมินได้ '+c[NA]+')' : '')],
+    [con.length, 'บันทึก', 'มีข้อกังวล (ติดตาม/เฝ้าระวัง/ไม่จบรายวิชา)'],
+    [nr ? Math.round(con.length*100/nr)+'%' : '—', '', 'อัตราข้อกังวล (ไม่นับที่ประเมินไม่ได้)'],
     [Object.keys(cd).length, 'ภาค', 'ภาควิชาที่มีข้อกังวล'],
-    [c['โดดเด่น'], 'บันทึก', 'โดดเด่น ★'],
+    [c['โดดเด่น'], 'บันทึก', 'โดดเด่น'],
     [af ? af.score : '—', af ? '/100' : '', af ? 'จิตพิสัย ปี '+esc(af.acad_year) : (B.affective ? 'จิตพิสัย: ไม่มีข้อมูล' : 'จิตพิสัย: ยังไม่มีแหล่งข้อมูล')]
   ];
   var subs = [['eval','ผลประเมิน ('+B.evals.filter(function(e){return !e.replaced;}).length+')'],['rev','ทบทวน/แผนดูแล'],['fu','บันทึกติดตาม'],['af','จิตพิสัย'],['gr','ผลการเรียน'],['hist','ประวัติแก้ไข'],['psy','🔒 ข้อมูลลับ']];
@@ -258,8 +264,8 @@ function renderPerson(){
       '<div class="tiles">'+tiles.map(function(t){ return '<div class="tile"><div class="n">'+t[0]+' <span class="u">'+t[1]+'</span></div><div class="q">'+t[2]+'</div></div>'; }).join('')+'</div>'+
       (rv ? '<div class="note">รอบทบทวนล่าสุด '+esc(rv.round_id)+': '+esc(rv.priority||'—')+(rv.progress?' · พัฒนาการ '+esc(rv.progress):'')+(rv.decision?' · มติ '+esc(rv.decision):'')+(rv.escalation?' · <b>'+esc(rv.escalation)+'</b>':'')+'</div>' : '')+
     '</div>'+
-    '<div class="panel"><h3>แนวโน้มรายเดือน</h3><div class="legend">'+STAT.map(function(s){ return '<span><i style="background:'+COLOR[s]+'"></i>'+(ICON[s]?ICON[s]+' ':'')+s+'</span>'; }).join('')+'<span><i style="border:1px dashed var(--faint)"></i>ไม่มีบันทึก</span></div>'+
-      '<div class="chart" id="trend"></div><div class="note">แท่ง = จำนวนบันทึกในเดือนนั้น แยกตามสถานะ · เดือนที่ไม่มีบันทึกแสดงกรอบประ (ไม่ใช่ "ปกติ")</div></div>'+
+    '<div class="panel"><h3>แนวโน้มรายเดือน</h3><div class="legend">'+STAT.map(function(s){ return '<span><i style="'+sw(s)+'"></i>'+s+'</span>'; }).join('')+'<span><i style="border:1px dashed var(--faint)"></i>ไม่มีบันทึก</span></div>'+
+      '<div class="chart" id="trend"></div><div class="note">แท่ง = จำนวนบันทึกในเดือนนั้น แยกตามสถานะ · เดือนที่ไม่มีบันทึกแสดงกรอบประ (ไม่ใช่ "อยู่ในเกณฑ์")</div></div>'+
     '<div class="sub" role="tablist">'+subs.map(function(s){ return '<button role="tab" data-s="'+s[0]+'" aria-selected="'+(SUB===s[0])+'">'+s[1]+'</button>'; }).join('')+'</div>'+
     '<div id="subBody"></div>';
   $('personEmpty').classList.add('hidden'); $('personBody').classList.remove('hidden');
@@ -285,7 +291,7 @@ function trendChart(el, ev){
   var bars = data.map(function(d, i){
     var x = L + i*step + (step-bw)/2, y = H - Bt, s = '';
     if (!d.t) s = '<rect x="'+x+'" y="'+(H-Bt-ys(max)*0.15)+'" width="'+bw+'" height="'+(ys(max)*0.15)+'" rx="4" fill="none" stroke="var(--faint)" stroke-dasharray="3 3"/>';
-    STAT.forEach(function(st){ var v = d.c[st]; if (!v) return; var h = ys(v); y -= h; s += '<rect x="'+x+'" y="'+y+'" width="'+bw+'" height="'+Math.max(h-2,1)+'" rx="3" fill="'+COLOR[st]+'"/>'; });
+    STAT.forEach(function(st){ var v = d.c[st]; if (!v) return; var h = ys(v); y -= h; s += '<rect x="'+x+'" y="'+y+'" width="'+bw+'" height="'+Math.max(h-2,1)+'" rx="3" fill="'+COLOR[st]+'"'+(st===NA?' stroke="var(--s5line)" stroke-width="1"':'')+'/>'; });
     var lab = (i % Math.ceil(data.length/12) === 0) ? '<text x="'+(x+bw/2)+'" y="'+(H-6)+'" text-anchor="middle" font-size="11" fill="var(--muted)">'+thm(d.k)+'</text>' : '';
     return '<g class="m" data-i="'+i+'">'+s+'<rect x="'+(L+i*step)+'" y="0" width="'+step+'" height="'+H+'" fill="transparent"/>'+lab+'</g>';
   }).join('');
@@ -293,7 +299,7 @@ function trendChart(el, ev){
   var tip = el.querySelector('.tip');
   [].forEach.call(el.querySelectorAll('g.m'), function(gm){
     gm.onmousemove = function(e){ var d = data[+gm.dataset.i], r = el.getBoundingClientRect();
-      tip.innerHTML = '<b>'+thm(d.k)+'</b><br>'+(d.t ? STAT.filter(function(s){ return d.c[s]; }).map(function(s){ return (ICON[s]||'○')+' '+s+' '+d.c[s]; }).join('<br>')+'<br><span class="hint">รวม '+d.t+' บันทึก · ข้อกังวล '+Math.round((d.c['ติดตาม']+d.c['เฝ้าระวัง']+d.c['ไม่จบรายวิชา'])*100/d.t)+'%</span>' : '<span class="hint">ไม่มีบันทึก</span>');
+      tip.innerHTML = '<b>'+thm(d.k)+'</b><br>'+(d.t ? STAT.filter(function(s){ return d.c[s]; }).map(function(s){ return '<i style="display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;'+sw(s)+'"></i>'+s+' '+d.c[s]; }).join('<br>')+'<br><span class="hint">รวม '+d.t+' บันทึก'+(d.t-d.c[NA] ? ' · ข้อกังวล '+Math.round((d.c['ติดตาม']+d.c['เฝ้าระวัง']+d.c['ไม่จบรายวิชา'])*100/(d.t-d.c[NA]))+'%' : '')+'</span>' : '<span class="hint">ไม่มีบันทึก</span>');
       tip.classList.remove('hidden'); var x = e.clientX - r.left + 12; tip.style.left = Math.min(x, r.width - tip.offsetWidth - 4) + 'px'; tip.style.top = (e.clientY - r.top - 10) + 'px'; };
     gm.onmouseleave = function(){ tip.classList.add('hidden'); };
   });
@@ -330,7 +336,7 @@ function renderReviews(el){
     var btn = r.locked ? '<span class="hint">🔒 รอบปิดแล้ว</span>' : '<button class="sm pri" data-edit="rs" data-k="'+esc(r.rr_id)+'">แก้ไขการจัดการ/แผนดูแล</button>';
     return '<div class="card"><div class="hd"><div><b>'+esc(r.round_id)+'</b> <span class="hint">ข้อมูล '+thd(r.period[0])+' – '+thd(r.period[1])+' · '+esc(r.round_status||'')+'</span></div>'+btn+'</div>'+
       '<dl class="kv"><dt>ลำดับการพิจารณา</dt><dd>'+dash(r.priority)+'</dd>'+
-      '<dt>บันทึกในช่วงนี้</dt><dd>'+dash(r.n_records)+' บันทึก · ★ '+(r.n_star||0)+' · ● '+(r.n_follow||0)+' · ▲ '+(r.n_watch||0)+' · ■ '+(r.n_fail||0)+'</dd>'+
+      '<dt>บันทึกในช่วงนี้</dt><dd>'+dash(r.n_records)+' บันทึก · โดดเด่น '+(r.n_star||0)+' · ติดตาม '+(r.n_follow||0)+' · เฝ้าระวัง '+(r.n_watch||0)+' · ไม่จบรายวิชา '+(r.n_fail||0)+'</dd>'+
       '<dt>ข้อกังวลเทียบรอบก่อน</dt><dd>'+dash(r.vs_prev)+'</dd>'+
       '<dt>พัฒนาการโดยรวม</dt><dd>'+dash(r.progress)+'</dd><dt>ผลของแผนรอบก่อน</dt><dd>'+dash(r.prev_outcome)+'</dd>'+
       '<dt>มติ/การดำเนินการ</dt><dd>'+dash(r.decision)+'</dd><dt>แผน</dt><dd>'+dash(r.plan)+'</dd>'+
@@ -520,31 +526,31 @@ function renderCohort(d){
   var all = []; Object.keys(ids).forEach(function(k){ all = all.concat(ids[k].ev); });
   var withCon = Object.keys(ids).filter(function(k){ return ids[k].ev.some(function(e){ return CONCERN[e.status]; }); });
   var noData = Object.keys(ids).filter(function(k){ return !ids[k].ev.length; });
-  var nCon = all.filter(function(e){ return CONCERN[e.status]; }).length;
-  var dep = {}; all.forEach(function(e){ var x = dep[e.dept] = dep[e.dept] || { n:0, c:counts([]), stu:{} }; x.n++; x.c[e.status]++; if (CONCERN[e.status]) x.stu[e.dept+'|'] = 1; });
+  var nCon = all.filter(function(e){ return CONCERN[e.status]; }).length, nRated = rated(all).length;
+  var dep = {}; all.forEach(function(e){ var x = dep[e.dept] = dep[e.dept] || { n:0, c:counts([]), stu:{} }; x.n++; var k = norm(e.status); if (x.c[k]!=null) x.c[k]++; if (CONCERN[e.status]) x.stu[e.dept+'|'] = 1; });
   var latest = {}; (d.reviews.latest||[]).forEach(function(r){ latest[r[0]] = r; });
   var watch = Object.keys(ids).map(function(k){ var x = ids[k], c = counts(x.ev), cd = {}; x.ev.forEach(function(e){ if (CONCERN[e.status]) cd[e.dept]=1; });
-      return { id:k, name:x.s.name, n:x.ev.length, con:c['ติดตาม']+c['เฝ้าระวัง']+c['ไม่จบรายวิชา'], sev:c['เฝ้าระวัง']+c['ไม่จบรายวิชา'], depts:Object.keys(cd).length, rv:latest[k] }; })
+      return { id:k, name:x.s.name, n:rated(x.ev).length, con:c['ติดตาม']+c['เฝ้าระวัง']+c['ไม่จบรายวิชา'], sev:c['เฝ้าระวัง']+c['ไม่จบรายวิชา'], depts:Object.keys(cd).length, rv:latest[k] }; })
     .filter(function(x){ return x.con > 0; }).sort(function(a,b){ return b.sev-a.sev || b.depts-a.depts || b.con-a.con; });
   var tiles = [[d.students.length,'คน','นักเรียนที่กำลังศึกษา'],[all.length,'บันทึก','ผลประเมินทั้งหมด'],[withCon.length,'คน','มีข้อกังวลอย่างน้อย 1 ครั้ง'],[nCon,'บันทึก','บันทึกที่เป็นข้อกังวล'],
-    [all.length?Math.round(nCon*100/all.length)+'%':'—','','อัตราข้อกังวล (บันทึก)'],[noData.length,'คน','ยังไม่มีผลประเมินเลย']];
+    [nRated?Math.round(nCon*100/nRated)+'%':'—','','อัตราข้อกังวล (ไม่นับที่ประเมินไม่ได้)'],[noData.length,'คน','ยังไม่มีผลประเมินเลย']];
   var rounds = d.reviews.rounds;
   $('cNote').textContent = 'ข้อมูล ณ ' + thd(d.today).replace(/<[^>]+>/g,'');
   $('cohortBody').innerHTML =
     '<div class="panel"><div class="tiles" style="margin-top:0">'+tiles.map(function(t){ return '<div class="tile"><div class="n">'+t[0]+' <span class="u">'+t[1]+'</span></div><div class="q">'+t[2]+'</div></div>'; }).join('')+'</div></div>'+
-    '<div class="panel"><h3>แนวโน้มทั้งชั้นปี (รายเดือน)</h3><div class="legend">'+STAT.map(function(s){ return '<span><i style="background:'+COLOR[s]+'"></i>'+(ICON[s]?ICON[s]+' ':'')+s+'</span>'; }).join('')+'</div><div class="chart" id="cTrend"></div></div>'+
-    '<div class="panel"><h3>สถานะแยกตามภาควิชา</h3><div class="tablewrap"><table><thead><tr><th>ภาควิชา</th><th class="num">บันทึก</th>'+STAT.map(function(s){ return '<th class="num">'+(ICON[s]||'')+' '+s+'</th>'; }).join('')+'<th>สัดส่วน</th></tr></thead><tbody>'+
+    '<div class="panel"><h3>แนวโน้มทั้งชั้นปี (รายเดือน)</h3><div class="legend">'+STAT.map(function(s){ return '<span><i style="'+sw(s)+'"></i>'+s+'</span>'; }).join('')+'</div><div class="chart" id="cTrend"></div></div>'+
+    '<div class="panel"><h3>สถานะแยกตามภาควิชา</h3><div class="tablewrap"><table><thead><tr><th>ภาควิชา</th><th class="num">บันทึก</th>'+STAT.map(function(s){ return '<th class="num"><i style="display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px;'+sw(s)+'"></i>'+s+'</th>'; }).join('')+'<th>สัดส่วน</th></tr></thead><tbody>'+
       Object.keys(dep).sort(function(a,b){ return short(a).localeCompare(short(b),'th'); }).map(function(k){ var x = dep[k];
         return '<tr><td>'+esc(short(k))+'</td><td class="num">'+x.n+'</td>'+STAT.map(function(s){ return '<td class="num">'+(x.c[s]||'<span class="hint">0</span>')+'</td>'; }).join('')+
-          '<td><div class="bar" title="'+esc(STAT.map(function(s){ return s+' '+x.c[s]; }).join(' · '))+'">'+STAT.filter(function(s){ return x.c[s]; }).map(function(s){ return '<span style="flex:'+x.c[s]+';background:'+COLOR[s]+'"></span>'; }).join('')+'</div></td></tr>'; }).join('')+
+          '<td><div class="bar" title="'+esc(STAT.map(function(s){ return s+' '+x.c[s]; }).join(' · '))+'">'+STAT.filter(function(s){ return x.c[s]; }).map(function(s){ return '<span style="flex:'+x.c[s]+';'+sw(s)+'"></span>'; }).join('')+'</div></td></tr>'; }).join('')+
       '</tbody></table></div></div>'+
     '<div class="panel"><h3>รอบทบทวนของชั้นปีนี้</h3>'+(rounds.length ? '<div class="tablewrap"><table><thead><tr><th>รอบ</th><th>ช่วงข้อมูล</th><th>วันประชุม</th><th>สถานะ</th></tr></thead><tbody>'+
       rounds.map(function(r){ return '<tr><td>'+esc(r.id)+'</td><td>'+thd(r.start)+' – '+thd(r.end)+'</td><td>'+(r.meeting?thd(r.meeting):'<span class="hint">—</span>')+'</td><td>'+esc(r.status)+'</td></tr>'; }).join('')+'</tbody></table></div>' : '<div class="hint">ยังไม่มีรอบทบทวน</div>')+'</div>'+
-    '<div class="panel"><h3>นักเรียนที่มีข้อกังวล ('+watch.length+' คน)</h3>'+(watch.length ? '<div class="tablewrap"><table><thead><tr><th>นักเรียน</th><th class="num">ข้อกังวล (บันทึก)</th><th class="num">▲■ (บันทึก)</th><th class="num">จากภาควิชา</th><th>ทบทวนล่าสุด</th><th>วันนัดตามแผน</th></tr></thead><tbody>'+
+    '<div class="panel"><h3>นักเรียนที่มีข้อกังวล ('+watch.length+' คน)</h3>'+(watch.length ? '<div class="tablewrap"><table><thead><tr><th>นักเรียน</th><th class="num">ข้อกังวล (บันทึก)</th><th class="num">เฝ้าระวัง + ไม่จบรายวิชา (บันทึก)</th><th class="num">จากภาควิชา</th><th>ทบทวนล่าสุด</th><th>วันนัดตามแผน</th></tr></thead><tbody>'+
       watch.map(function(x){ var r = x.rv; return '<tr><td><a class="lnk" data-open="'+esc(x.id)+'">'+esc(x.name)+'</a><div class="hint">'+esc(x.id)+'</div></td><td class="num">'+x.con+' / '+x.n+'</td><td class="num">'+x.sev+'</td><td class="num">'+x.depts+' ภาค</td>'+
         '<td>'+(r ? esc(r[1])+'<div class="hint">'+esc([r[2],r[3],r[4]].filter(Boolean).join(' · '))+'</div>'+(r[7]?'<div><b>'+esc(r[7])+'</b></div>':'') : '<span class="hint">—</span>')+'</td><td>'+(r&&r[5]?thd(r[5]):'<span class="hint">—</span>')+'</td></tr>'; }).join('')+
       '</tbody></table></div>' : '<div class="hint">ไม่มีนักเรียนที่มีข้อกังวล</div>')+'<div class="note">"วันนัดตามแผน" คือวันที่กำหนดไว้ในแผน ระบบไม่สรุปว่างานเสร็จหรือค้าง</div></div>';
-  var ev = all.map(function(e){ return { week_start:e.week, status:e.status }; }), saveB = B; B = { today: d.today }; trendChart($('cTrend'), ev); B = saveB;
+  var ev = all.map(function(e){ return { week_start:e.week, status:norm(e.status) }; }), saveB = B; B = { today: d.today }; trendChart($('cTrend'), ev); B = saveB;
   [].forEach.call(document.querySelectorAll('[data-open]'), function(a){ a.onclick = function(){ showView('person'); openStudent(a.dataset.open); }; });
 }
 
@@ -554,14 +560,14 @@ function loadTeach(){
   LOADED.teach = true; $('teachBody').innerHTML = '<div class="panel empty">กำลังโหลด...</div>';
   api('adm_teachers', { from: $('tFrom').value, to: $('tTo').value }).then(function(d){
     $('teachBody').innerHTML =
-      '<div class="panel"><h3>การส่งรายอาจารย์ ('+d.teachers.length+' คน)</h3>'+(d.teachers.length ? '<div class="tablewrap"><table><thead><tr><th>อาจารย์</th><th>ภาควิชาที่ส่ง</th><th class="num">ครั้งที่ส่ง</th><th class="num">บันทึก</th><th class="num">นักเรียน (คน)</th><th class="num">ข้อกังวล (บันทึก)</th><th>ส่งล่าสุด</th></tr></thead><tbody>'+
+      '<div class="panel"><h3>การส่งรายอาจารย์ ('+d.teachers.length+' คน)</h3>'+(d.teachers.length ? '<div class="tablewrap"><table><thead><tr><th>อาจารย์</th><th>ภาควิชาที่ส่ง</th><th class="num">ครั้งที่ส่ง</th><th class="num">บันทึก</th><th class="num">นักเรียน (คน)</th><th class="num">ข้อกังวล (บันทึก)</th><th class="num">ไม่สามารถประเมินได้</th><th>ส่งล่าสุด</th></tr></thead><tbody>'+
         d.teachers.map(function(t){ return '<tr><td>'+(t.name?esc(t.name)+'<div class="hint">'+esc(t.email)+'</div>':esc(t.email))+'</td><td>'+t.depts.map(function(x){ return esc(short(x)); }).join(', ')+'</td>'+
-          '<td class="num">'+t.submissions+'</td><td class="num">'+t.records+'</td><td class="num">'+t.students+'</td><td class="num">'+t.concerns+'</td><td>'+thd(t.last)+'</td></tr>'; }).join('')+'</tbody></table></div>' : '<div class="hint">ไม่มีการส่งในช่วงนี้</div>')+
+          '<td class="num">'+t.submissions+'</td><td class="num">'+t.records+'</td><td class="num">'+t.students+'</td><td class="num">'+t.concerns+'</td><td class="num">'+(t.na||'<span class="hint">0</span>')+'</td><td>'+thd(t.last)+'</td></tr>'; }).join('')+'</tbody></table></div>' : '<div class="hint">ไม่มีการส่งในช่วงนี้</div>')+
         '<div class="note">ครั้งที่ส่ง = ภาควิชา × สัปดาห์ · บันทึก = ผลประเมินรายคน (ไม่นับที่แทนที่แล้ว) · นักเรียน = จำนวนคนไม่ซ้ำ</div></div>'+
-      '<div class="panel"><h3>การส่งครบรายภาควิชา</h3>'+(d.depts.length ? '<div class="tablewrap"><table><thead><tr><th>ภาควิชา</th><th class="num">ต้องประเมิน</th><th class="num">ประเมินแล้ว</th><th class="num">ส่งครบ</th><th></th></tr></thead><tbody>'+
-        d.depts.map(function(x){ return '<tr><td>'+esc(short(x.dept))+'</td><td class="num">'+x.due+'</td><td class="num">'+x.done+'</td><td class="num">'+(x.pct==null?'—':x.pct+'%')+'</td><td><div class="meter"><span style="width:'+(x.pct||0)+'%"></span></div></td></tr>'; }).join('')+'</tbody></table></div>'
+      '<div class="panel"><h3>การส่งครบรายภาควิชา</h3>'+(d.depts.length ? '<div class="tablewrap"><table><thead><tr><th>ภาควิชา</th><th class="num">ต้องประเมิน</th><th class="num">ประเมินแล้ว</th><th class="num">ส่งครบ</th><th></th><th class="num">ไม่สามารถประเมินได้ (บันทึก)</th></tr></thead><tbody>'+
+        d.depts.map(function(x){ return '<tr><td>'+esc(short(x.dept))+'</td><td class="num">'+x.due+'</td><td class="num">'+x.done+'</td><td class="num">'+(x.pct==null?'—':x.pct+'%')+'</td><td><div class="meter"><span style="width:'+(x.pct||0)+'%"></span></div></td><td class="num">'+(x.records ? (x.na||0)+' / '+x.records+' ('+Math.round((x.na||0)*100/x.records)+'%)' : '<span class="hint">—</span>')+'</td></tr>'; }).join('')+'</tbody></table></div>'
         : '<div class="nosrc">ยังไม่มีฐานคำนวณในช่วงนี้ (ไม่มี rotation ที่สิ้นสุดแล้วในตารางหมุนเวียน) จึงไม่แสดงเปอร์เซ็นต์</div>')+
-        '<div class="note">ฐาน = นักเรียน 1 คน × 1 rotation ที่สิ้นสุดแล้วในช่วงที่เลือก (หน่วย: คน-rotation) · นับว่าประเมินแล้วเมื่อมีผลประเมินจากภาควิชานั้นระหว่างช่วง rotation ถึง 2 สัปดาห์หลังสิ้นสุด</div></div>';
+        '<div class="note">ฐาน = นักเรียน 1 คน × 1 rotation ที่สิ้นสุดแล้วในช่วงที่เลือก (หน่วย: คน-rotation) · นับว่าประเมินแล้วเมื่อมีผลประเมินจากภาควิชานั้นระหว่างช่วง rotation ถึง 2 สัปดาห์หลังสิ้นสุด (รวม "ไม่สามารถประเมินได้" ว่าส่งแล้ว)</div></div>';
   }).catch(function(e){ if (relogin(e, loadTeach)) return; $('teachBody').innerHTML = '<div class="panel empty">'+esc(e.message)+'</div>'; });
 }
 /* ---------- ตั้งค่า (เฉพาะ psypcm) ---------- */
