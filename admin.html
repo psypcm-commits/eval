@@ -88,6 +88,37 @@ dialog .bd{padding:14px 16px;max-height:68vh;overflow:auto}dialog .ft{padding:12
 #gbtn{min-height:44px;margin:12px 0}
 .note{font-size:12px;color:var(--muted);margin-top:8px}
 a.lnk{color:var(--brand2);cursor:pointer;text-decoration:underline}
+/* ภาพรวมชั้นปี */
+.ovtiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:12px}
+.ovtiles .tile{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px}.ovtiles .tile .n{font-size:30px}.ovtiles .tile .q{font-size:14px}
+.ovtiles .tile.hi{border-color:var(--brand2)}.ovtiles .tile.hi .n{color:var(--brand2)}
+.ovhead{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:10px}.ovhead h3{margin:0}
+.seg2{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.seg2 button{min-height:38px;border:1px solid var(--line);background:transparent}
+.seg2 button[aria-pressed=true]{background:var(--brand2);border-color:var(--brand2);color:#fff}
+.ovfilt{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px}
+.ovfilt .ft{width:100%;font-weight:600;font-size:14px}.ovfilt label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}.ovfilt label.grow{flex:1 1 220px}
+.ovfilt input,.ovfilt select{min-height:38px}
+.ovt td{vertical-align:middle}.ovt input.tick{width:22px;height:22px;accent-color:var(--brand2)}
+.ovt input[type=date],.ovt input[type=text]{font-size:14px;padding:6px 8px;max-width:160px}.ovt input.saved{border-color:var(--ok);box-shadow:0 0 0 2px var(--ok)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .ovt input[type=date]{color-scheme:dark}}
+.ovt td.nm{min-width:190px;white-space:normal}.ncell{max-width:240px}.nl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+button.lnkbtn{background:none;border:1px solid var(--line);color:var(--brand2);margin-top:4px}
+i.sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+.bar.empty{border:1px dashed var(--faint);border-radius:4px}
+.gp{display:inline-block;font-size:12px;padding:2px 8px;border-radius:999px;white-space:nowrap;margin:1px 0}.gp.done{background:var(--soft);color:var(--muted);border:1px solid var(--line)}.gp.now{background:var(--brand2);color:#fff}
+.rotwrap{overflow-x:auto}.rotin{min-width:900px}
+.rr{display:grid;grid-template-columns:96px minmax(0,1fr);gap:10px;align-items:start;margin-bottom:10px}.rr .rn{font-weight:600;font-size:14px;padding-top:28px}.rr.sub .rn{font-weight:400;padding-left:12px}
+.rr.axis{margin-bottom:4px}.rr.axis .rn{padding:0}.rt{position:relative}.rt.ax{height:20px;border-bottom:1px solid var(--line)}
+.mk{position:absolute;top:0;font-size:12px;color:var(--muted);border-left:1px solid var(--line);padding-left:4px;white-space:nowrap;height:20px}
+.sg{position:absolute;height:82px;display:flex;flex-direction:column;justify-content:flex-end;gap:2px;padding:0 1px;box-sizing:border-box;min-width:0}
+.sg .tt{font-size:11px;color:var(--muted);height:18px;line-height:18px;white-space:nowrap;overflow:hidden}
+.sg .sb{height:46px;display:flex;flex-direction:column-reverse;gap:1px;border-radius:4px;overflow:hidden;background:var(--soft)}.sg .sb i{display:block;min-height:2px}
+.sg .sl{font-size:12px;line-height:20px;padding:0 4px;border-radius:4px;background:var(--soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sg.fut .sb{background:none;border:1px dashed var(--faint)}.sg.fut .sl{background:none;border:1px dashed var(--faint);color:var(--faint)}
+.sg.now .sb{outline:2px solid var(--brand2);outline-offset:1px}
+.rbody{position:relative}.tline{position:absolute;top:0;bottom:0;left:106px;right:0;pointer-events:none}.today{position:absolute;top:0;bottom:0;width:2px;background:var(--brand2)}
+.nlist{display:grid;gap:8px;max-height:40vh;overflow:auto;margin-bottom:12px}
+@media(max-width:600px){.ovtiles{grid-template-columns:1fr}}
 </style></head>
 <body>
 <header><div><h1>ผู้ดูแลระบบสูงสุด · ระบบติดตามนักเรียนแพทย์</h1><div class="who" id="who"></div></div><a href="#" id="signout" class="hidden">ออกจากระบบ</a></header>
@@ -122,7 +153,7 @@ a.lnk{color:var(--brand2);cursor:pointer;text-decoration:underline}
   </section>
 
   <section id="v-cohort" class="hidden">
-    <div class="filters"><label>ชั้นปี <select id="cYear"></select></label><span class="hint" id="cNote"></span></div>
+    <div class="filters"><label>ชั้นปี <select id="cYear"></select></label><label>ปีการศึกษา <select id="cAy"><option value="">ปัจจุบัน</option></select></label><span class="hint" id="cNote"></span></div>
     <div id="cohortBody"><div class="panel empty">กำลังโหลด...</div></div>
   </section>
 
@@ -143,6 +174,13 @@ a.lnk{color:var(--brand2);cursor:pointer;text-decoration:underline}
     <div class="hd"><h2 id="dlgTitle"></h2></div>
     <div class="bd" id="dlgBody"></div>
     <div class="ft"><button type="button" id="dlgCancel">ยกเลิก</button><button type="submit" class="pri" id="dlgSave">บันทึก</button></div>
+  </form>
+</dialog>
+<dialog id="dlg2" aria-labelledby="d2Title">
+  <form method="dialog" id="d2Form" novalidate>
+    <div class="hd"><h2 id="d2Title"></h2></div>
+    <div class="bd" id="d2Body"></div>
+    <div class="ft"><button type="button" id="d2Cancel">ปิด</button><button type="submit" class="pri" id="d2Save">บันทึก</button></div>
   </form>
 </dialog>
 <div id="toast" class="hidden" role="status" aria-live="polite"></div>
@@ -181,10 +219,13 @@ window.onGoogleLibraryLoad = function(){
   $('login').classList.remove('hidden'); google.accounts.id.prompt();
 };
 $('signout').onclick = function(e){ e.preventDefault(); psyLock(true); try{ google.accounts.id.disableAutoSelect(); }catch(_){} location.reload(); };
-function api(action, data){
+function api(action, data, tries){
+  tries = tries == null ? (/^psy_/.test(action) ? 0 : 2) : tries;   /* Google ตอบหน้า error ชั่วคราวเป็นครั้งคราว -> ลองใหม่อัตโนมัติ (ไม่ใช้กับ PIN) */
+  var again = function(msg){ if (tries > 0) return new Promise(function(ok){ setTimeout(ok, 1200); }).then(function(){ return api(action, data, tries - 1); }); throw new Error(msg); };
   return fetch(CONFIG.API, { method:'POST', body: JSON.stringify(Object.assign({ action: action, idToken: idToken }, data||{})) })
-    .then(function(r){ return r.json(); }, function(){ throw new Error('เชื่อมต่อไม่ได้ กรุณาตรวจอินเทอร์เน็ต'); })
-    .then(function(r){ if (r.ok) return r.data; var e = new Error(r.error||'เกิดข้อผิดพลาด'); e.code = r.code; throw e; });
+    .then(function(r){ return r.text().then(function(t){ try { return JSON.parse(t); } catch(_){ return { _html:true }; } }); }, function(){ return { _net:true }; })
+    .then(function(r){ if (r._net) return again('เชื่อมต่อไม่ได้ กรุณาตรวจอินเทอร์เน็ต'); if (r._html) return again('ระบบ Google ไม่ตอบชั่วคราว กรุณาลองใหม่อีกครั้ง');
+      if (r.ok) return r.data; var e = new Error(r.error||'เกิดข้อผิดพลาด'); e.code = r.code; throw e; });
 }
 function relogin(e, retry){
   if (e && e.code === 'AUTH'){ idToken=''; pending = retry; $('login').classList.remove('hidden'); $('loginMsg').textContent = e.message; try{ google.accounts.id.prompt(); }catch(_){} return true; }
@@ -515,43 +556,226 @@ document.addEventListener('visibilitychange', function(){ if (document.hidden &&
 window.addEventListener('pagehide', function(){ psyLock(true); });
 
 /* ---------- ภาพรวมชั้นปี ---------- */
-$('cYear').onchange = loadCohort;
+/* ปีการศึกษา + ชั้นปี · ติดตามใกล้ชิด (ติ๊กเอง ผูกกับรหัส) · กราฟยึดช่วง rotation · ตารางภาควิชา · รอบทบทวน */
+var OV = null, OVS = { view:'follow', sort:'ratio', q:'', st:'', min:1, dmin:'', per:'ay', from:'', to:'', grp:'', exp:{} };
+try { var _ovs = JSON.parse(localStorage.getItem('ovs') || '{}'); if (_ovs.view) OVS.view = _ovs.view; if (_ovs.sort) OVS.sort = _ovs.sort; } catch(_){}
+function ovSave(){ try { localStorage.setItem('ovs', JSON.stringify({ view:OVS.view, sort:OVS.sort })); } catch(_){} }
+$('cYear').onchange = function(){ $('cAy').value = ''; loadCohort(); };
+$('cAy').onchange = loadCohort;
 function loadCohort(){
   LOADED.cohort = true; $('cohortBody').innerHTML = '<div class="panel empty">กำลังโหลด...</div>';
-  api('adm_overview', { year: $('cYear').value }).then(renderCohort).catch(function(e){ if (relogin(e, loadCohort)) return; $('cohortBody').innerHTML = '<div class="panel empty">'+esc(e.message)+'</div>'; });
+  api('adm_overview', { year: $('cYear').value, ay: $('cAy').value }).then(function(d){
+    OV = d; OVS.per = 'ay'; OVS.from = ''; OVS.to = ''; OVS.grp = ''; OVS.exp = {};
+    $('cAy').innerHTML = d.ays.map(function(a){ return '<option value="'+a+'"'+(a===d.ay?' selected':'')+'>'+a+(a===d.curAY?' (ปัจจุบัน)':'')+'</option>'; }).join('');
+    renderCohort();
+  }).catch(function(e){ if (relogin(e, loadCohort)) return; $('cohortBody').innerHTML = '<div class="panel empty">'+esc(e.message)+'</div>'; });
 }
-function renderCohort(d){
-  var ids = {}; d.students.forEach(function(s){ ids[s.id] = { s:s, ev:[] }; });
-  d.ratings.forEach(function(r){ var x = ids[r[0]]; if (x) x.ev.push({ dept:r[1], week:r[2], status:r[3], action:r[7] }); });
-  var all = []; Object.keys(ids).forEach(function(k){ all = all.concat(ids[k].ev); });
-  var withCon = Object.keys(ids).filter(function(k){ return ids[k].ev.some(function(e){ return CONCERN[e.status]; }); });
-  var noData = Object.keys(ids).filter(function(k){ return !ids[k].ev.length; });
-  var nCon = all.filter(function(e){ return CONCERN[e.status]; }).length, nRated = rated(all).length;
-  var dep = {}; all.forEach(function(e){ var x = dep[e.dept] = dep[e.dept] || { n:0, c:counts([]), stu:{} }; x.n++; var k = norm(e.status); if (x.c[k]!=null) x.c[k]++; if (CONCERN[e.status]) x.stu[e.dept+'|'] = 1; });
-  var latest = {}; (d.reviews.latest||[]).forEach(function(r){ latest[r[0]] = r; });
-  var watch = Object.keys(ids).map(function(k){ var x = ids[k], c = counts(x.ev), cd = {}; x.ev.forEach(function(e){ if (CONCERN[e.status]) cd[e.dept]=1; });
-      return { id:k, name:x.s.name, n:rated(x.ev).length, con:c['ติดตาม']+c['เฝ้าระวัง']+c['ไม่จบรายวิชา'], sev:c['เฝ้าระวัง']+c['ไม่จบรายวิชา'], depts:Object.keys(cd).length, rv:latest[k] }; })
-    .filter(function(x){ return x.con > 0; }).sort(function(a,b){ return b.sev-a.sev || b.depts-a.depts || b.con-a.con; });
-  var tiles = [[d.students.length,'คน','นักเรียนที่กำลังศึกษา'],[all.length,'บันทึก','ผลประเมินทั้งหมด'],[withCon.length,'คน','มีข้อกังวลอย่างน้อย 1 ครั้ง'],[nCon,'บันทึก','บันทึกที่เป็นข้อกังวล'],
-    [nRated?Math.round(nCon*100/nRated)+'%':'—','','อัตราข้อกังวล (ไม่นับที่ประเมินไม่ได้)'],[noData.length,'คน','ยังไม่มีผลประเมินเลย']];
-  var rounds = d.reviews.rounds;
-  $('cNote').textContent = 'ข้อมูล ณ ' + thd(d.today).replace(/<[^>]+>/g,'');
+function shortD(d){ return short(d).replace(/^หน่วย/,''); }
+function ovPeriod(){
+  var d = OV, f = d.range.start, t = d.range.end;
+  if (OVS.per === 'custom'){ f = OVS.from || f; t = OVS.to || t; }
+  else if (OVS.per !== 'ay'){ var r = d.rounds.filter(function(x){ return x.id === OVS.per; })[0]; if (r){ f = r.start; t = r.end; } }
+  return { from: f, to: t };
+}
+function ovStats(){
+  var d = OV, p = ovPeriod(), by = {};
+  d.students.forEach(function(s){ by[s.id] = { s:s, ev:[] }; });
+  d.ratings.forEach(function(r){ var x = by[r[0]]; if (!x) return; if (r[2] < addD(p.from,-6) || r[2] > p.to) return; x.ev.push({ dept:r[1], week:r[2], status:r[3] }); });
+  return Object.keys(by).map(function(k){ var x = by[k], c = counts(x.ev), n = rated(x.ev).length, con = c['ติดตาม']+c['เฝ้าระวัง']+c['ไม่จบรายวิชา'];
+    return { s:x.s, ev:x.ev, c:c, n:n, con:con, ratio: n ? con/n : -1 }; });
+}
+function addD(s, n){ var d = new Date(s+'T00:00:00Z'); d.setUTCDate(d.getUTCDate()+n); return d.toISOString().slice(0,10); }
+function frac(v, n){ return n ? v+'/'+n+' <span class="hint">('+Math.round(v*100/n)+'%)</span>' : '<span class="hint">—</span>'; }
+function sbar(c){ var t = 0; STAT.forEach(function(s){ t += c[s]; }); if (!t) return '<div class="bar empty" title="ยังไม่มีผลประเมิน"></div>';
+  return '<div class="bar" title="'+esc(STAT.filter(function(s){ return c[s]; }).map(function(s){ return s+' '+c[s]; }).join(' · '))+'">'+STAT.filter(function(s){ return c[s]; }).map(function(s){ return '<span style="flex:'+c[s]+';'+sw(s)+'"></span>'; }).join('')+'</div>'; }
+function renderCohort(){
+  var d = OV; if (!d) return;
+  var ys = +d.year, rows = ovStats(), fol = d.follow, nTick = d.students.filter(function(s){ return fol[s.id] && fol[s.id].active; }).length;
+  $('cNote').textContent = 'ข้อมูล ณ ' + thd(d.today).replace(/<[^>]+>/g,'') + (d.ay !== d.curAY ? ' · ดูย้อนหลังปีการศึกษา '+d.ay+' (นับตามชั้นปี ณ ตอนประเมิน)' : '');
+  var grps = {}; d.students.forEach(function(s){ if (s.group) grps[s.group] = 1; });
+  var grpOpts = Object.keys(grps).sort(function(a,b){ return a.localeCompare(b,'th',{numeric:true}); });
+  var perOpts = '<option value="ay">ปีการศึกษา '+esc(d.ay)+'</option>'+d.rounds.map(function(r){ return '<option value="'+esc(r.id)+'"'+(OVS.per===r.id?' selected':'')+'>รอบทบทวน '+esc(r.id)+'</option>'; }).join('')+'<option value="custom"'+(OVS.per==='custom'?' selected':'')+'>กำหนดเอง</option>';
   $('cohortBody').innerHTML =
-    '<div class="panel"><div class="tiles" style="margin-top:0">'+tiles.map(function(t){ return '<div class="tile"><div class="n">'+t[0]+' <span class="u">'+t[1]+'</span></div><div class="q">'+t[2]+'</div></div>'; }).join('')+'</div></div>'+
-    '<div class="panel"><h3>แนวโน้มทั้งชั้นปี (รายเดือน)</h3><div class="legend">'+STAT.map(function(s){ return '<span><i style="'+sw(s)+'"></i>'+s+'</span>'; }).join('')+'</div><div class="chart" id="cTrend"></div></div>'+
-    '<div class="panel"><h3>สถานะแยกตามภาควิชา</h3><div class="tablewrap"><table><thead><tr><th>ภาควิชา</th><th class="num">บันทึก</th>'+STAT.map(function(s){ return '<th class="num"><i style="display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px;'+sw(s)+'"></i>'+s+'</th>'; }).join('')+'<th>สัดส่วน</th></tr></thead><tbody>'+
-      Object.keys(dep).sort(function(a,b){ return short(a).localeCompare(short(b),'th'); }).map(function(k){ var x = dep[k];
-        return '<tr><td>'+esc(short(k))+'</td><td class="num">'+x.n+'</td>'+STAT.map(function(s){ return '<td class="num">'+(x.c[s]||'<span class="hint">0</span>')+'</td>'; }).join('')+
-          '<td><div class="bar" title="'+esc(STAT.map(function(s){ return s+' '+x.c[s]; }).join(' · '))+'">'+STAT.filter(function(s){ return x.c[s]; }).map(function(s){ return '<span style="flex:'+x.c[s]+';'+sw(s)+'"></span>'; }).join('')+'</div></td></tr>'; }).join('')+
-      '</tbody></table></div></div>'+
-    '<div class="panel"><h3>รอบทบทวนของชั้นปีนี้</h3>'+(rounds.length ? '<div class="tablewrap"><table><thead><tr><th>รอบ</th><th>ช่วงข้อมูล</th><th>วันประชุม</th><th>สถานะ</th></tr></thead><tbody>'+
-      rounds.map(function(r){ return '<tr><td>'+esc(r.id)+'</td><td>'+thd(r.start)+' – '+thd(r.end)+'</td><td>'+(r.meeting?thd(r.meeting):'<span class="hint">—</span>')+'</td><td>'+esc(r.status)+'</td></tr>'; }).join('')+'</tbody></table></div>' : '<div class="hint">ยังไม่มีรอบทบทวน</div>')+'</div>'+
-    '<div class="panel"><h3>นักเรียนที่มีข้อกังวล ('+watch.length+' คน)</h3>'+(watch.length ? '<div class="tablewrap"><table><thead><tr><th>นักเรียน</th><th class="num">ข้อกังวล (บันทึก)</th><th class="num">เฝ้าระวัง + ไม่จบรายวิชา (บันทึก)</th><th class="num">จากภาควิชา</th><th>ทบทวนล่าสุด</th><th>วันนัดตามแผน</th></tr></thead><tbody>'+
-      watch.map(function(x){ var r = x.rv; return '<tr><td><a class="lnk" data-open="'+esc(x.id)+'">'+esc(x.name)+'</a><div class="hint">'+esc(x.id)+'</div></td><td class="num">'+x.con+' / '+x.n+'</td><td class="num">'+x.sev+'</td><td class="num">'+x.depts+' ภาค</td>'+
-        '<td>'+(r ? esc(r[1])+'<div class="hint">'+esc([r[2],r[3],r[4]].filter(Boolean).join(' · '))+'</div>'+(r[7]?'<div><b>'+esc(r[7])+'</b></div>':'') : '<span class="hint">—</span>')+'</td><td>'+(r&&r[5]?thd(r[5]):'<span class="hint">—</span>')+'</td></tr>'; }).join('')+
-      '</tbody></table></div>' : '<div class="hint">ไม่มีนักเรียนที่มีข้อกังวล</div>')+'<div class="note">"วันนัดตามแผน" คือวันที่กำหนดไว้ในแผน ระบบไม่สรุปว่างานเสร็จหรือค้าง</div></div>';
-  var ev = all.map(function(e){ return { week_start:e.week, status:norm(e.status) }; }), saveB = B; B = { today: d.today }; trendChart($('cTrend'), ev); B = saveB;
-  [].forEach.call(document.querySelectorAll('[data-open]'), function(a){ a.onclick = function(){ showView('person'); openStudent(a.dataset.open); }; });
+    '<div class="ovtiles"><div class="tile"><div class="n">'+d.students.length+' <span class="u">คน</span></div><div class="q">นักเรียนในชั้นปี'+(d.ay!==d.curAY?' (ที่มีผลประเมินในปีนั้น)':'')+'</div></div>'+
+      '<div class="tile hi"><div class="n">'+nTick+' <span class="u">คน</span></div><div class="q">ติดตามใกล้ชิด (ติ๊กเลือกเอง)</div></div></div>'+
+    '<div class="panel"><h3>'+(ys<=3?'ผลประเมินตามรายวิชา (เรียนพร้อมกันทั้งชั้นปี)':'ผลประเมินคู่กับ rotation ของแต่ละกลุ่ม')+'</h3>'+
+      '<div class="hint" style="margin-bottom:8px">แท่ง 1 แท่ง = 1 '+(ys<=3?'รายวิชา':'rotation')+' ตามช่วงวันจริง (กว้างตามจำนวนสัปดาห์) แบ่งสีตามสถานะ · ตัวเลข = จำนวนผลประเมิน · เส้นฟ้า = วันนี้ · กรอบเส้นประ = ยังไม่ถึง</div>'+
+      '<div class="legend">'+STAT.map(function(s){ return '<span><i style="'+sw(s)+'"></i>'+s+'</span>'; }).join('')+'</div><div id="rotChart"></div></div>'+
+    '<div class="panel"><div class="ovhead"><h3 id="ovTitle"></h3><div class="seg2"><span class="hint">แสดง</span>'+
+      '<button class="sm" data-view="follow" aria-pressed="'+(OVS.view==='follow')+'">ติดตามใกล้ชิด ('+nTick+')</button><button class="sm" data-view="all" aria-pressed="'+(OVS.view==='all')+'">ทุกคนในชั้นปี ('+d.students.length+')</button>'+
+      '<span class="hint" style="margin-left:8px">เรียงตาม</span><button class="sm" data-sort="name" aria-pressed="'+(OVS.sort==='name')+'">ชื่อ ก–ฮ</button><button class="sm" data-sort="ratio" aria-pressed="'+(OVS.sort==='ratio')+'">อัตราข้อกังวล มาก→น้อย</button></div></div>'+
+      '<div class="ovfilt'+(OVS.view==='all'?'':' hidden')+'" id="ovFilt"><div class="ft">ค้นหาและตัวกรอง <span class="hint">· ใช้กับมุมมอง "ทุกคนในชั้นปี" · ช่วงเวลาใช้กับตัวเลขทั้งตาราง</span></div>'+
+        '<label class="grow">ค้นหาชื่อหรือรหัส<input type="search" id="fq" value="'+esc(OVS.q)+'" placeholder="พิมพ์ชื่อ นามสกุล หรือรหัส"></label>'+
+        '<label>ผลประเมิน<select id="fst"><option value="">ไม่กรอง</option>'+['โดดเด่น','ติดตาม','เฝ้าระวัง','ไม่จบรายวิชา','ข้อกังวลใดก็ได้','ไม่สามารถประเมินได้'].map(function(o){ return '<option'+(OVS.st===o?' selected':'')+'>'+o+'</option>'; }).join('')+'</select></label>'+
+        '<label>อย่างน้อย (ครั้ง)<input type="number" id="fmin" min="1" value="'+esc(OVS.min)+'" style="width:90px"></label>'+
+        '<label>จากอย่างน้อย (ภาควิชา)<input type="number" id="fdmin" min="1" value="'+esc(OVS.dmin)+'" placeholder="ไม่ระบุ" style="width:110px"></label>'+
+        '<label>ช่วงเวลา<select id="fper">'+perOpts+'</select></label>'+
+        '<label class="'+(OVS.per==='custom'?'':'hidden')+'" id="fcus">ตั้งแต่ – ถึง<span style="display:flex;gap:4px"><input type="date" id="ffrom" value="'+esc(OVS.from)+'"><input type="date" id="fto" value="'+esc(OVS.to)+'"></span></label>'+
+        (grpOpts.length?'<label>กลุ่ม<select id="fgrp"><option value="">ทุกกลุ่ม</option>'+grpOpts.map(function(g){ return '<option'+(OVS.grp===g?' selected':'')+'>'+esc(g)+'</option>'; }).join('')+'</select></label>':'')+
+        '<button class="sm" id="fclear" type="button">ล้างตัวกรอง</button><span class="hint">ติ๊กช่องหน้าชื่อเพื่อเพิ่มเข้า "ติดตามใกล้ชิด" ได้ทันที</span></div>'+
+      '<div class="tablewrap"><table class="ovt"><thead><tr><th>ติดตาม</th><th>นักเรียน</th><th class="num"><i class="sw" style="'+sw('ติดตาม')+'"></i>ติดตาม</th><th class="num"><i class="sw" style="'+sw('เฝ้าระวัง')+'"></i>เฝ้าระวัง</th><th class="num"><i class="sw" style="'+sw('ไม่จบรายวิชา')+'"></i>ไม่จบรายวิชา</th>'+
+        '<th style="min-width:170px">สัดส่วนผลประเมิน</th><th>วันนัดติดตาม</th><th>ผู้รับผิดชอบ</th><th style="min-width:200px">ความเห็นเพิ่มเติม</th></tr></thead><tbody id="ovRows"></tbody></table></div>'+
+      '<div class="note">x/n = จำนวนครั้ง ÷ ผลประเมินที่ประเมินได้ (ไม่นับ "ไม่สามารถประเมินได้") ในช่วงเวลาที่เลือก · วันนัด/ผู้รับผิดชอบแก้ได้ในตาราง ระบบบันทึกทันทีพร้อมประวัติ · ติดตามใกล้ชิดผูกกับรหัสนักเรียน ติดตัวข้ามปี</div></div>'+
+    '<div class="panel"><h3>สถานะแยกตามภาควิชา</h3><div class="legend"><span><span class="gp done">'+(ys<=3?'ทั้งชั้น':'กลุ่ม')+'</span>'+(ys<=3?'ทั้งชั้นเรียนภาคนี้จบแล้ว':'ผ่านภาคนี้แล้ว')+' (ปีการศึกษา '+esc(d.ay)+')</span><span><span class="gp now">'+(ys<=3?'ทั้งชั้น':'กลุ่ม')+'</span>กำลังอยู่ตอนนี้</span></div><div id="deptTbl"></div></div>'+
+    '<div class="panel"><h3>รอบทบทวนของชั้นปีนี้</h3><div id="rndTbl"></div></div>';
+  [].forEach.call(document.querySelectorAll('[data-view]'), function(b){ b.onclick = function(){ OVS.view = b.dataset.view; ovSave(); renderCohort(); }; });
+  [].forEach.call(document.querySelectorAll('[data-sort]'), function(b){ b.onclick = function(){ OVS.sort = b.dataset.sort; ovSave(); renderCohort(); }; });
+  var fl = function(){ OVS.q = $('fq').value; OVS.st = $('fst').value; OVS.min = Math.max(1, +$('fmin').value || 1); OVS.dmin = $('fdmin').value;
+    OVS.per = $('fper').value; OVS.from = $('ffrom').value; OVS.to = $('fto').value; OVS.grp = $('fgrp') ? $('fgrp').value : '';
+    $('fcus').classList.toggle('hidden', OVS.per !== 'custom'); ovRows(); };
+  ['fq','fmin','fdmin'].forEach(function(k){ $(k).oninput = fl; }); ['fst','fper','ffrom','fto','fgrp'].forEach(function(k){ if ($(k)) $(k).onchange = fl; });
+  $('fclear').onclick = function(){ OVS.q=''; OVS.st=''; OVS.min=1; OVS.dmin=''; OVS.per='ay'; OVS.from=''; OVS.to=''; OVS.grp=''; renderCohort(); };
+  ovRows(); rotChart(); deptTable(); roundTable();
+}
+function ovRows(){
+  var d = OV, all = ovStats(), fol = d.follow, isAll = OVS.view === 'all';
+  var q = OVS.q.trim().toLowerCase(), st = OVS.st, mn = OVS.min, dm = +OVS.dmin || 0;
+  var match = function(e){ return st==='ข้อกังวลใดก็ได้' ? CONCERN[e.status] : e.status === st; };
+  var rows = all.filter(function(x){
+    var t = fol[x.s.id] && fol[x.s.id].active;
+    if (!isAll) return t;
+    if (q && x.s.id.toLowerCase().indexOf(q) < 0 && x.s.name.toLowerCase().indexOf(q) < 0) return false;
+    if (OVS.grp && x.s.group !== OVS.grp) return false;
+    if (st){ var hit = x.ev.filter(match), dp = {}; hit.forEach(function(e){ dp[e.dept] = 1; });
+      if (hit.length < mn || Object.keys(dp).length < dm) return false; }
+    return true; });
+  rows.sort(function(a,b){ return OVS.sort === 'name' ? a.s.name.localeCompare(b.s.name,'th') : (b.ratio - a.ratio) || a.s.name.localeCompare(b.s.name,'th'); });
+  var nT = all.filter(function(x){ return fol[x.s.id] && fol[x.s.id].active; }).length;
+  $('ovTitle').textContent = isAll ? 'นักเรียนทุกคนในชั้นปี (แสดง '+rows.length+' จาก '+all.length+' คน)' : 'นักเรียนที่ติดตามใกล้ชิด ('+nT+' คน)';
+  $('ovFilt').classList.toggle('hidden', !isAll);
+  var notes = d.notes, plans = d.plans;
+  $('ovRows').innerHTML = rows.length ? rows.map(function(x){
+    var s = x.s, f = fol[s.id], on = !!(f && f.active), nt = notes[s.id], dash = '<span class="hint">—</span>';
+    return '<tr data-id="'+esc(s.id)+'"><td><input type="checkbox" class="tick" aria-label="ติดตามใกล้ชิด '+esc(s.name)+'"'+(on?' checked':'')+'></td>'+
+      '<td class="nm"><a class="lnk" data-open="'+esc(s.id)+'">'+esc(s.name)+'</a><div class="hint">'+esc(s.id)+(s.group?' · กลุ่ม '+esc(s.group):'')+'</div>'+
+        (s.repeat?'<span class="pill warn" title="เคยเรียนชั้นปีนี้ในปีการศึกษา '+esc(s.repeat)+'">ซ้ำชั้น</span> ':'')+(s.status!=='กำลังศึกษา'?'<span class="pill">'+esc(s.status)+'</span>':'')+'</td>'+
+      '<td class="num">'+frac(x.c['ติดตาม'],x.n)+'</td><td class="num">'+frac(x.c['เฝ้าระวัง'],x.n)+'</td><td class="num">'+frac(x.c['ไม่จบรายวิชา'],x.n)+'</td>'+
+      '<td>'+sbar(x.c)+'<div class="hint" style="margin-top:4px">'+(x.n?'ข้อกังวลรวม '+Math.round(x.ratio*100)+'%':'ยังไม่มีผลที่ประเมินได้')+(x.c[NA]?' · ประเมินไม่ได้ '+x.c[NA]:'')+'</div></td>'+
+      '<td>'+(on?'<input type="date" class="fdate" value="'+esc(f.next_date||'')+'" aria-label="วันนัดติดตาม">':dash)+'</td>'+
+      '<td>'+(on?'<input type="text" class="fown" maxlength="120" value="'+esc(f.owner||'')+'" placeholder="ชื่อผู้รับผิดชอบ" aria-label="ผู้รับผิดชอบ">':dash)+'</td>'+
+      '<td class="ncell">'+(on?(nt?'<div class="nl" title="'+esc(nt.latest.text)+'">'+esc(nt.latest.text)+'</div><div class="hint">'+thd(nt.latest.at)+'</div>':'<div class="hint">ยังไม่มีความเห็น</div>')+
+        '<button class="sm lnkbtn" data-notes="'+esc(s.id)+'">'+(nt?'ดู/เพิ่ม ('+nt.n+')':'+ เพิ่มความเห็น')+'</button>':'<span class="hint">ไม่ได้ติดตามใกล้ชิด</span>')+'</td></tr>'; }).join('')
+    : '<tr><td colspan="9" class="empty">'+(isAll?'ไม่มีนักเรียนตามตัวกรอง':'ยังไม่มีนักเรียนที่ติดตามใกล้ชิด — กด "ทุกคนในชั้นปี" แล้วติ๊กช่องหน้าชื่อเพื่อเพิ่ม')+'</td></tr>';
+  [].forEach.call(document.querySelectorAll('#ovRows tr[data-id]'), function(tr){
+    var id = tr.dataset.id;
+    tr.querySelector('.tick').onchange = function(){ var cb = this, on = cb.checked; cb.disabled = true;
+      api('adm_follow', { id:id, active:on, reqId: rid() }).then(function(r){ OV.follow[id] = r.rec; toast(r.message + (on && (r.rec.next_date||r.rec.owner) ? ' · ใช้วันนัด/ผู้รับผิดชอบจากแผนรอบทบทวนล่าสุด' : '')); renderCohort(); })
+        .catch(function(e){ cb.checked = !on; cb.disabled = false; if (relogin(e, function(){})) return; toast('ยังไม่ได้บันทึก: '+e.message); }); };
+    [['.fdate','next_date'],['.fown','owner']].forEach(function(p){ var el = tr.querySelector(p[0]); if (!el) return;
+      el.onchange = function(){ var v = el.value.trim(); el.disabled = true;
+        api('adm_follow_edit', { id:id, field:p[1], value:v, reqId: rid() }).then(function(r){ OV.follow[id] = r.rec; el.disabled = false; el.classList.add('saved'); setTimeout(function(){ el.classList.remove('saved'); }, 1500); toast(r.message); })
+          .catch(function(e){ el.disabled = false; el.value = (OV.follow[id]||{})[p[1]] || ''; if (relogin(e, function(){})) return; toast('ยังไม่ได้บันทึก: '+e.message); }); }; });
+  });
+  [].forEach.call(document.querySelectorAll('#ovRows [data-open]'), function(a){ a.onclick = function(){ showView('person'); openStudent(a.dataset.open); }; });
+  [].forEach.call(document.querySelectorAll('#ovRows [data-notes]'), function(b){ b.onclick = function(){ openNotes(b.dataset.notes); }; });
+}
+/* กราฟ: 1 แถวต่อกลุ่ม (ปี 1–3 = ทั้งชั้น) วางตามวันจริง · ปี 6 รวมกลุ่มใหญ่ กดขยายกลุ่มย่อย */
+function rotChart(){
+  var d = OV, el = $('rotChart'), ys = +d.year, today = d.today;
+  if (!d.rotation.length){ el.innerHTML = '<div class="nosrc">ยังไม่มีตารางหมุนเวียนของชั้นปีนี้ในปีการศึกษา '+esc(d.ay)+' — แสดงเป็นรายเดือนแทน</div><div class="chart" id="cTrend" style="margin-top:10px"></div>';
+    var ev = d.ratings.map(function(r){ return { week_start:r[2], status:r[3] }; }), saveB = B; B = { today: d.today }; trendChart($('cTrend'), ev); B = saveB; return; }
+  var gOf = {}; d.students.forEach(function(s){ gOf[s.id] = s.group; });
+  var lo = d.rotation.reduce(function(m,r){ return r[3] < m ? r[3] : m; }, '9999'), hi = d.rotation.reduce(function(m,r){ return r[4] > m ? r[4] : m; }, '0000');
+  if (lo < d.range.start) lo = d.range.start; if (hi > d.range.end) hi = d.range.end;
+  var t0 = Date.parse(lo), span = (Date.parse(addD(hi,1)) - t0) || 1, pos = function(s){ return Math.max(0, Math.min(100, (Date.parse(s) - t0) / span * 100)); };
+  var rowKey = function(id){ return ys <= 3 ? 'ทั้งชั้นปี' : (gOf[id] || 'ไม่ระบุกลุ่ม'); };
+  var major = function(g){ return ys === 6 && /\./.test(g) ? g.split('.')[0] : ''; };
+  var segMap = {}, rowsM = {};
+  d.rotation.forEach(function(r){ var rk = rowKey(r[0]), k = rk+'|'+r[1]+'|'+r[3]+'|'+r[4];
+    var s = segMap[k] = segMap[k] || { row:rk, dept:r[1], course:r[2], start:r[3], end:r[4], ids:{} }; s.ids[r[0]] = 1; rowsM[rk] = 1; });
+  var segs = Object.keys(segMap).map(function(k){ return segMap[k]; });
+  var used = 0;
+  d.ratings.forEach(function(r){ var hit = null; segs.forEach(function(s){ if (!hit && s.ids[r[0]] && s.dept === r[1] && r[2] >= addD(s.start,-6) && r[2] <= s.end) hit = s; });
+    if (hit){ (hit.ev = hit.ev || []).push({ status:r[3] }); used++; } });
+  var segHtml = function(s, lane){ var fut = s.start > today, now = !fut && s.end >= today, c = counts(s.ev||[]), t = (s.ev||[]).length;
+    var lab = ys <= 3 ? (s.course || shortD(s.dept)) : shortD(s.dept), L = pos(s.start), W = Math.max(pos(addD(s.end,1)) - L, 0.6);
+    var tip = shortD(s.dept)+(s.course?' · '+s.course:'')+'\n'+thd(s.start)+' – '+thd(s.end)+'\n'+(fut?'ยังไม่ถึง':(t?STAT.filter(function(x){ return c[x]; }).map(function(x){ return x+' '+c[x]; }).join(' · '):'ยังไม่มีผลประเมิน'));
+    return '<div class="sg'+(fut?' fut':'')+(now?' now':'')+'" style="left:'+L+'%;width:'+W+'%;top:'+(lane*84)+'px" title="'+esc(tip.replace(/<[^>]+>/g,''))+'">'+
+      '<span class="tt">'+(fut?'':t+(now?' (กำลังอยู่)':''))+'</span><div class="sb">'+(fut||!t?'':STAT.filter(function(x){ return c[x]; }).map(function(x){ return '<i style="flex:'+c[x]+';'+sw(x)+'"></i>'; }).join(''))+'</div>'+
+      '<div class="sl">'+esc(lab)+'</div></div>'; };
+  var pack = function(list){ var lanes = []; list.sort(function(a,b){ return a.start < b.start ? -1 : 1; }).forEach(function(s){
+      var i = 0; while (lanes[i] && lanes[i] >= s.start) i++; lanes[i] = s.end; s.lane = i; }); return Math.max(lanes.length,1); };
+  var mkRow = function(name, list, cls, attrs){ var n = pack(list);
+    return '<div class="rr '+(cls||'')+'"'+(attrs||'')+'><div class="rn">'+name+'</div><div class="rt" style="height:'+(n*84)+'px">'+list.map(function(s){ return segHtml(s, s.lane); }).join('')+'</div></div>'; };
+  var names = Object.keys(rowsM).sort(function(a,b){ return a.localeCompare(b,'th',{numeric:true}); });
+  var html = '', majors = {};
+  names.forEach(function(n){ var m = major(n); if (m) (majors[m] = majors[m] || []).push(n); });
+  var done = {};
+  names.forEach(function(n){ var m = major(n);
+    if (!m){ html += mkRow(n === 'ทั้งชั้นปี' ? n : 'กลุ่ม '+esc(n), segs.filter(function(s){ return s.row === n; })); return; }
+    if (done[m]) return; done[m] = 1;
+    var subs = majors[m], open = !!OVS.exp[m];
+    if (!open){ var merged = {}; segs.filter(function(s){ return subs.indexOf(s.row) >= 0; }).forEach(function(s){ var k = s.dept+'|'+s.start+'|'+s.end;
+        var x = merged[k] = merged[k] || { dept:s.dept, course:s.course, start:s.start, end:s.end, ev:[] }; x.ev = x.ev.concat(s.ev||[]); });
+      html += mkRow('<button class="sm lnkbtn" data-exp="'+esc(m)+'" aria-expanded="false">▸ กลุ่ม '+esc(m)+'</button><div class="hint">'+subs.length+' กลุ่มย่อย</div>', Object.keys(merged).map(function(k){ return merged[k]; }), 'maj'); }
+    else { html += '<div class="rr maj"><div class="rn"><button class="sm lnkbtn" data-exp="'+esc(m)+'" aria-expanded="true">▾ กลุ่ม '+esc(m)+'</button></div><div></div></div>';
+      subs.forEach(function(sn){ html += mkRow('กลุ่ม '+esc(sn), segs.filter(function(s){ return s.row === sn; }), 'sub'); }); }
+  });
+  var months = '', dt = new Date(lo+'T00:00:00Z'), lastL = -99; dt.setUTCDate(1);
+  while (dt.toISOString().slice(0,10) <= hi){ var ms = dt.toISOString().slice(0,10), L = pos(ms < lo ? lo : ms);
+    if (L - lastL >= 6){ months += '<span class="mk" style="left:'+L+'%">'+thm(ms.slice(0,7))+'</span>'; lastL = L; }   /* เดือนแรกที่เหลือไม่กี่วัน ไม่ให้ป้ายซ้อนกัน */
+    else if (lastL === 0){ months = months.replace(/<span class="mk" style="left:0%">[^<]*<\/span>$/, ''); months += '<span class="mk" style="left:'+L+'%">'+thm(ms.slice(0,7))+'</span>'; lastL = L; }
+    dt.setUTCMonth(dt.getUTCMonth()+1); }
+  var tl = today >= lo && today <= hi ? '<div class="today" style="left:'+pos(today)+'%" title="วันนี้ '+thd(today).replace(/<[^>]+>/g,'')+'"></div>' : '';
+  var miss = d.ratings.length - used;
+  el.innerHTML = '<div class="rotwrap"><div class="rotin"><div class="rr axis"><div class="rn"></div><div class="rt ax">'+months+'</div></div>'+
+    '<div class="rbody">'+html+'<div class="tline">'+tl+'</div></div></div></div>'+
+    (miss>0?'<div class="note">ผลประเมิน '+miss+' รายการไม่ตรงกับช่วง rotation ของภาควิชานั้น (เช่น ประเมินเฉพาะบุคคล หรือตารางยังไม่ครบ) จึงไม่แสดงในกราฟ แต่ยังนับในตารางด้านล่าง</div>':'');
+  [].forEach.call(el.querySelectorAll('[data-exp]'), function(b){ b.onclick = function(){ var m = b.dataset.exp; OVS.exp[m] = !OVS.exp[m]; rotChart(); }; });
+}
+function deptTable(){
+  var d = OV, ys = +d.year, today = d.today, dep = {};
+  d.ratings.forEach(function(r){ var x = dep[r[1]] = dep[r[1]] || { n:0, c:counts([]) }; x.n++; if (x.c[r[3]] != null) x.c[r[3]]++; });
+  var gOf = {}; d.students.forEach(function(s){ gOf[s.id] = s.group; });
+  var pills = {};
+  d.rotation.forEach(function(r){ var g = ys <= 3 ? 'ทั้งชั้น' : (gOf[r[0]] || ''); if (!g) return;
+    var p = (pills[r[1]] = pills[r[1]] || {}), x = p[g] = p[g] || { done:true, now:false, any:false };
+    if (r[3] > today) x.done = false; else x.any = true;
+    if (r[3] <= today && r[4] >= today) x.now = true; if (r[4] >= today) x.done = false;
+    if (!dep[r[1]]) dep[r[1]] = { n:0, c:counts([]) }; });
+  var keys = Object.keys(dep).sort(function(a,b){ return short(a).localeCompare(short(b),'th'); });
+  $('deptTbl').innerHTML = keys.length ? '<div class="tablewrap"><table><thead><tr><th>ภาควิชา</th><th class="num">บันทึก</th>'+STAT.map(function(s){ return '<th class="num"><i class="sw" style="'+sw(s)+'"></i>'+s+'</th>'; }).join('')+'<th style="min-width:160px">สัดส่วน</th><th>'+(ys<=3?'ช่วงเรียน':'กลุ่ม')+'</th></tr></thead><tbody>'+
+    keys.map(function(k){ var x = dep[k], p = pills[k] || {};
+      var pl = Object.keys(p).filter(function(g){ return p[g].now || (p[g].done && p[g].any); }).sort(function(a,b){ return a.localeCompare(b,'th',{numeric:true}); })
+        .map(function(g){ return '<span class="gp '+(p[g].now?'now':'done')+'">'+(g==='ทั้งชั้น'?g:'กลุ่ม '+esc(g))+'</span>'; }).join(' ');
+      return '<tr><td>'+esc(short(k))+'</td><td class="num">'+x.n+'</td>'+STAT.map(function(s){ return '<td class="num">'+(x.c[s]||'<span class="hint">0</span>')+'</td>'; }).join('')+
+        '<td>'+sbar(x.c)+'</td><td>'+(pl||'<span class="hint">—</span>')+'</td></tr>'; }).join('')+'</tbody></table></div>'
+    : '<div class="hint">ยังไม่มีผลประเมินหรือตารางหมุนเวียนในปีการศึกษานี้</div>';
+}
+function roundTable(){
+  var d = OV;
+  $('rndTbl').innerHTML = d.rounds.length ? '<div class="tablewrap"><table><thead><tr><th>รอบ</th><th>วันประชุม</th><th>ข้อแนะนำจากการประชุมครั้งก่อน</th><th>ข้อสรุปของที่ประชุมรอบนี้</th></tr></thead><tbody>'+
+    d.rounds.map(function(r){ var p = r.prev;
+      return '<tr><td>'+esc(r.id)+'<div class="hint">ข้อมูล '+thd(r.start)+' – '+thd(r.end)+(r.status?' · '+esc(r.status):'')+'</div></td><td>'+(r.meeting?thd(r.meeting):'<span class="hint">ยังไม่นัด</span>')+'</td>'+
+        '<td class="cmt">'+(!p?'<span class="hint">รอบแรกของปี ไม่มีการประชุมก่อนหน้า</span>':'<div class="hint">จากการประชุม '+(p.meeting?thd(p.meeting):esc(p.id))+'</div>'+(p.conclusion?esc(p.conclusion):'<span class="hint">ที่ประชุมรอบก่อนยังไม่ได้บันทึกข้อสรุป</span>'))+'</td>'+
+        '<td class="cmt">'+(r.conclusion?esc(r.conclusion):'<span class="hint">ยังไม่บันทึก</span>')+'<div><button class="sm lnkbtn" data-rnote="'+esc(r.id)+'">'+(r.conclusion?'แก้ไขข้อสรุป':'+ บันทึกข้อสรุป')+'</button></div></td></tr>'; }).join('')+'</tbody></table></div>'+
+    '<div class="note">ข้อสรุปกรอกได้ทั้งที่นี่และในแท็บ "รอบทบทวน" ของ DB_MAIN (คอลัมน์ ข้อสรุป/ข้อแนะนำของที่ประชุม) · การแก้จากหน้านี้เก็บประวัติในแท็บ _ประวัติแก้ไขผ่านเว็บ</div>'
+    : '<div class="hint">ยังไม่มีรอบทบทวนของชั้นปีนี้ในปีการศึกษา '+esc(d.ay)+'</div>';
+  [].forEach.call(document.querySelectorAll('[data-rnote]'), function(b){ b.onclick = function(){ openRoundNote(b.dataset.rnote); }; });
+}
+/* หน้าต่างความเห็น / ข้อสรุปที่ประชุม */
+var D2 = null;
+function dlg2(title, body, saveLabel, onSave){
+  $('d2Title').textContent = title; $('d2Body').innerHTML = body + '<div class="msg err" id="d2Msg" role="alert"></div>';
+  $('d2Save').textContent = saveLabel; $('d2Save').disabled = false; D2 = { save:onSave, busy:false }; $('dlg2').showModal();
+}
+$('d2Cancel').onclick = function(){ if (!D2 || !D2.busy) $('dlg2').close(); };
+$('dlg2').addEventListener('cancel', function(e){ if (D2 && D2.busy) e.preventDefault(); });
+$('d2Form').onsubmit = function(e){ e.preventDefault(); if (!D2 || D2.busy) return; D2.busy = true; $('d2Save').disabled = true; $('d2Msg').textContent = '';
+  D2.save().then(function(){ D2.busy = false; $('dlg2').close(); }).catch(function(err){ D2.busy = false; $('d2Save').disabled = false; if (relogin(err, function(){})) { $('dlg2').close(); return; } $('d2Msg').textContent = 'ยังไม่ได้บันทึก: '+err.message; }); };
+function openNotes(id){
+  var s = OV.students.filter(function(x){ return x.id === id; })[0], req = rid();
+  dlg2('ความเห็นเพิ่มเติม · '+s.name, '<div id="d2List" class="hint">กำลังโหลด...</div>'+fld('d2Text','เพิ่มความเห็นใหม่ (ห้ามใส่ข้อมูลสุขภาพ/การวินิจฉัย)','<textarea id="d2Text" maxlength="1000"></textarea>'), 'บันทึกความเห็น', function(){
+    var t = $('d2Text').value.trim(); if (t.length < 2) return Promise.reject(new Error('กรุณาพิมพ์ความเห็น'));
+    return api('adm_note_add', { id:id, text:t, reqId:req }).then(function(r){ var n = r.notes; OV.notes[id] = n.length ? { n:n.length, latest:{ at:n[0].at, by:n[0].by, text:n[0].text.slice(0,160) } } : null; toast(r.message); ovRows(); }); });
+  api('adm_notes', { id:id }).then(function(r){ if (!$('d2List')) return; $('d2List').className = ''; $('d2List').innerHTML = r.notes.length ? '<div class="nlist">'+r.notes.map(function(n){ return '<div class="card"><div class="hint">'+thd(n.at)+' · '+esc(n.by)+'</div><div class="cmt">'+esc(n.text)+'</div></div>'; }).join('')+'</div>' : '<div class="hint">ยังไม่มีความเห็น</div>'; })
+    .catch(function(e){ if ($('d2List')) $('d2List').textContent = e.message; });
+}
+function openRoundNote(id){
+  var r = OV.rounds.filter(function(x){ return x.id === id; })[0];
+  dlg2('ข้อสรุปของที่ประชุม · '+id, '<div class="ctx">รอบ '+esc(id)+' · '+(r.meeting?'ประชุม '+thd(r.meeting):'ยังไม่นัดประชุม')+'<br><span class="hint">ข้อความนี้จะแสดงเป็น "ข้อแนะนำจากการประชุมครั้งก่อน" ในรอบถัดไป</span></div>'+
+    fld('d2Text','ข้อสรุป / ข้อแนะนำของที่ประชุม (ห้ามใส่ข้อมูลสุขภาพ/การวินิจฉัย)','<textarea id="d2Text" maxlength="2000" style="min-height:140px">'+esc(r.conclusion)+'</textarea>'), 'บันทึก', function(){
+    return api('adm_round_note', { round:id, text:$('d2Text').value, reqId: rid() }).then(function(x){ r.conclusion = x.conclusion; OV.rounds.forEach(function(y){ if (y.prev && y.prev.id === id) y.prev.conclusion = x.conclusion; }); toast(x.message); roundTable(); }); });
 }
 
 /* ---------- การมีส่วนร่วมของอาจารย์ ---------- */
