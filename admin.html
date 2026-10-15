@@ -108,7 +108,8 @@ label.fol input{width:20px;height:20px;accent-color:var(--brand2)}label.fol.on{b
 .pst i{display:block;flex:0 1 12px;min-height:3px;border-radius:2px}
 .pseg .pl{font-size:12px;line-height:24px;padding:0 5px;border-radius:4px;background:var(--soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pseg.fut .pst{background:none;border:1px dashed var(--faint)}.pseg.fut .pl{background:none;color:var(--faint)}
-.pseg.now .pst{outline:2px solid var(--brand2);outline-offset:-1px}.pseg.loose .pl{font-style:italic}
+.pseg.now .pst{outline:2px solid var(--brand2);outline-offset:-1px}.pseg.loose .pl{font-style:italic}.pseg.loose .pst{background:none;border:1px solid var(--s2)}
+.pxcap{position:absolute;left:0;right:0;height:22px;line-height:22px;font-size:12px;color:var(--muted);border-top:1px dashed var(--line)}
 .pbody .today{position:absolute;top:0;bottom:0;width:2px;background:var(--brand2);pointer-events:none}
 /* การมีส่วนร่วมของอาจารย์ */
 .cbar{display:flex;height:16px;border-radius:4px;overflow:hidden;background:var(--soft);min-width:120px}.cbar span{display:block;height:100%}
@@ -417,20 +418,27 @@ function pRow(y){
   var extra = [];
   left.forEach(function(e){ var x = extra.filter(function(s){ return s.dept === e.department && e.week_start <= addD(s.end, 7); })[0];
     if (x){ x.ev.push(e); if (addD(e.week_start,6) > x.end) x.end = addD(e.week_start,6); } else extra.push({ dept:e.department, course:e.course||'', start:e.week_start, end:addD(e.week_start,6), ev:[e], loose:true }); });
-  segs = segs.concat(extra).filter(function(s){ return s.end >= t0 && s.start <= t1; }).sort(function(a,b){ return a.start < b.start ? -1 : 1; });
-  var lanes = []; segs.forEach(function(s){ var i = 0; while (lanes[i] && lanes[i] >= s.start) i++; lanes[i] = s.end; s.lane = i; });
-  var LH = 96, nL = Math.max(lanes.length, 1), early = +y.level > 0 && +y.level <= 3;
+  /* ผลที่ภาควิชาไม่ตรงกับตารางหมุนเวียนช่วงนั้น -> แยกไว้แถวล่าง "ไม่ตรงกับตารางหมุนเวียน" (เช่น ข้อมูลสมมติ หรือเลือกภาควิชา/นักเรียนผิด) */
+  var inR = function(s){ return s.end >= t0 && s.start <= t1; }, byS = function(a,b){ return a.start < b.start ? -1 : 1; };
+  var pack = function(list){ var ln = []; list.forEach(function(s){ var i = 0; while (ln[i] && ln[i] >= s.start) i++; ln[i] = s.end; s.lane = i; }); return ln.length; };
+  var rs = segs.filter(inR).sort(byS), xs = extra.filter(inR).sort(byS);
+  xs.forEach(function(s){ s.L = pos(s.start); s.W = Math.max(pos(addD(s.end,1)) - s.L, 7); });   /* กว้างพออ่านได้ จัดแถวตามความกว้างบนจอ */
+  var packX = function(list){ var ln = []; list.forEach(function(s){ var i = 0; while (ln[i] != null && ln[i] > s.L) i++; ln[i] = s.L + s.W + 0.3; s.lane = i; }); return ln.length; };
+  var LH = 96, nR = Math.max(pack(rs), 1), nX = packX(xs), CAP = 24, early = +y.level > 0 && +y.level <= 3;
+  rs.forEach(function(s){ s.top = s.lane * LH; }); xs.forEach(function(s){ s.top = nR * LH + CAP + s.lane * LH; });
+  segs = rs.concat(xs);
+  var totH = nR * LH + (nX ? CAP + nX * LH : 0);
   var months = '', dt = new Date(t0+'T00:00:00Z');
   while (dt.toISOString().slice(0,10) <= t1){ var ms = dt.toISOString().slice(0,10); months += '<span class="mk" style="left:'+pos(ms)+'%">'+thm(ms.slice(0,7))+'</span>'; dt.setUTCMonth(dt.getUTCMonth()+1); }
   var html = segs.map(function(s){
-    var fut = s.start > today && !s.ev.length, now = s.start <= today && s.end >= today, L = pos(s.start), W = Math.max(pos(addD(s.end,1)) - L, 0.8);
+    var fut = s.start > today && !s.ev.length, now = s.start <= today && s.end >= today, L = s.loose ? s.L : pos(s.start), W = s.loose ? s.W : Math.max(pos(addD(s.end,1)) - L, 0.8);
     var lab = early ? (s.course || shortD(s.dept)) : shortD(s.dept);
-    var tip = shortD(s.dept)+(s.course?' · '+s.course:'')+'\n'+thd(s.start).replace(/<[^>]+>/g,'')+' – '+thd(s.end).replace(/<[^>]+>/g,'')+'\n'+(fut ? 'ยังไม่ถึง' : s.ev.length ? s.ev.map(function(e){ return thd(e.week_start).replace(/<[^>]+>/g,'')+' '+e.status; }).join('\n') : 'ยังไม่มีผลประเมิน')+(s.loose?'\n(ไม่มีในตารางหมุนเวียน — แสดงตามสัปดาห์ที่ประเมิน)':'');
-    return '<div class="pseg'+(fut?' fut':'')+(now?' now':'')+(s.loose?' loose':'')+'" style="left:'+L+'%;width:'+W+'%;top:'+(s.lane*LH)+'px" title="'+esc(tip)+'">'+
+    var tip = shortD(s.dept)+(s.course?' · '+s.course:'')+'\n'+thd(s.start).replace(/<[^>]+>/g,'')+' – '+thd(s.end).replace(/<[^>]+>/g,'')+'\n'+(fut ? 'ยังไม่ถึง' : s.ev.length ? s.ev.map(function(e){ return thd(e.week_start).replace(/<[^>]+>/g,'')+' '+e.status; }).join('\n') : 'ยังไม่มีผลประเมิน')+(s.loose?'\n(ภาควิชานี้ไม่อยู่ในตารางหมุนเวียนของนักเรียนช่วงนั้น — แสดงตามสัปดาห์ที่ประเมิน)':'');
+    return '<div class="pseg'+(fut?' fut':'')+(now?' now':'')+(s.loose?' loose':'')+'" style="left:'+L+'%;width:'+W+'%;top:'+s.top+'px" title="'+esc(tip)+'">'+
       '<div class="pst">'+s.ev.map(function(e){ return '<i style="'+sw(e.status)+'"></i>'; }).join('')+'</div><div class="pl">'+esc(lab)+'</div></div>'; }).join('');
   var tl = today >= t0 && today <= t1 ? '<div class="today" style="left:'+pos(today)+'%"></div>' : '';
   return '<div class="prow"><div class="pn"><b>'+esc(y.ay)+'</b>'+(y.level?'<div class="hint">ปี '+esc(y.level)+'</div>':'')+'</div><div class="ptrk"><div class="rt ax">'+months+'</div>'+
-    '<div class="pbody" style="height:'+(nL*LH)+'px">'+html+tl+'</div></div></div>';
+    '<div class="pbody" style="height:'+totH+'px">'+(nX ? '<div class="pxcap" style="top:'+(nR*LH)+'px">ผลประเมินที่ภาควิชาไม่ตรงกับตารางหมุนเวียนช่วงนั้น ('+xs.reduce(function(a,s){ return a + s.ev.length; }, 0)+' ครั้ง) — ชี้ที่ช่องเพื่อดูรายละเอียด</div>' : '')+html+tl+'</div></div></div>';
 }
 function months(ev){
   if (!ev.length) return [];
