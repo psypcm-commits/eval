@@ -82,7 +82,7 @@ button{font:inherit;border:0;border-radius:8px;padding:10px 16px;cursor:pointer}
   <div class="panel">
     <div class="row2">
       <div><label for="dept">ภาควิชาที่จัดการเรียนการสอน *</label><select id="dept"></select>
-        <div class="hint" style="margin-top:4px">เลือกภาควิชาเจ้าของรายวิชาที่นักเรียนเรียนอยู่ ไม่ใช่ภาควิชาที่ท่านสังกัด</div></div>
+        <div class="hint" style="margin-top:4px">เลือกภาควิชาเจ้าของรายวิชาที่นักเรียนเรียนอยู่ ไม่ใช่ภาควิชาที่ท่านสังกัด · ถ้าไม่ทราบ เลือก "ไม่ทราบ — ให้ระบบหาจากตารางหมุนเวียน"</div></div>
       <div><label for="affil">สังกัดของอาจารย์ผู้ประเมิน *</label><select id="affil"></select>
         <div class="hint" style="margin-top:4px">ภาควิชา/หน่วยงานที่ท่านสังกัด หรือ "โรงพยาบาลสมทบ" — ระบบเลือกให้ตามข้อมูลผู้ประเมิน แก้ได้</div></div>
     </div>
@@ -188,14 +188,14 @@ function boot(){
     $('who').textContent = 'ผู้ประเมิน: ' + (b.name ? b.name + ' · ' : '') + b.email + (b.site && b.site !== 'วพม.' ? ' · ' + b.site : '');
     $('signout').classList.remove('hidden');
     $('app').classList.remove('hidden');
-    $('dept').innerHTML = '<option value="">— เลือกภาควิชา —</option>' + b.depts.map(function(d){return '<option>'+esc(d)+'</option>';}).join('');
+    $('dept').innerHTML = '<option value="">— เลือกภาควิชา —</option>' + (b.deptAuto ? '<option>'+esc(b.deptAuto)+'</option>' : '') + b.depts.map(function(d){return '<option>'+esc(d)+'</option>';}).join('');
     if (b.lastDept) $('dept').value = b.lastDept;
     ME = b.email; var af = b.affils || b.depts;
     $('affil').innerHTML = '<option value="">— เลือกสังกัด —</option>' + af.map(function(d){return '<option>'+esc(d)+'</option>';}).join('');
     var mine = lsGet('affil:' + ME); $('affil').value = af.indexOf(mine) >= 0 ? mine : (b.affil || '');
     var t = new Date(); $('week').value = t.getFullYear()+'-'+('0'+(t.getMonth()+1)).slice(-2)+'-'+('0'+t.getDate()).slice(-2);
     var q = new URLSearchParams(location.search);
-    if (q.get('dept') && b.depts.indexOf(q.get('dept')) >= 0) $('dept').value = q.get('dept');
+    if (q.get('dept') && (b.depts.indexOf(q.get('dept')) >= 0 || q.get('dept') === b.deptAuto)) $('dept').value = q.get('dept');
     if (/^\d{4}-\d{2}-\d{2}$/.test(q.get('week') || '')) $('week').value = q.get('week');
     if ($('dept').value) setTimeout(function(){ $('load').onclick(); }, 0);
     $('micHint').textContent = micOk ? 'กด 🎤 แล้วพูดความเห็น ระบบจะแปลงเป็นข้อความให้ (กดอีกครั้งเพื่อหยุด และตรวจทานก่อนส่ง)'
@@ -258,6 +258,7 @@ function chosen(i){ return !!SEL[gkey(students[i])]; }
 function card(i){
   var s = students[i], cur = norm(s.status) || OK;
   return '<div class="stu'+cls(cur)+'" id="c'+i+'"><div class="top"><span class="name">'+esc(s.name)+'</span><span class="id">'+esc(s.id)+' · ปี '+esc(s.year)+(s.ind && s.group ? ' · กลุ่ม '+esc(s.group) : '')+
+    (s.autoDept ? ' <span class="tag" title="ภาควิชาที่ระบบหาจากตารางหมุนเวียนของสัปดาห์นี้">→ '+esc(s.autoDept.replace(/^ภาควิชา/,''))+'</span>' : '')+
     (s.ind ? ' <button type="button" class="rm" onclick="rmInd('+i+')">นำออก</button>' : '')+'</span></div>'+
     '<div class="seg" role="radiogroup" aria-label="สถานะ '+esc(s.name)+'">'+ST.map(function(o,k){var id='r'+i+'_'+k;return '<input type="radio" class="o'+k+'" name="s'+i+'" id="'+id+'" value="'+o+'"'+(o===cur?' checked':'')+' onchange="chg('+i+')"><label for="'+id+'">'+o+'</label>';}).join('')+'</div>'+
     '<div class="act'+(NEEDC[cur]?'':' hidden')+'" id="a'+i+'" role="radiogroup" aria-label="การดำเนินการ"><span class="lbl">การดำเนินการ *</span><div class="seg">'+
