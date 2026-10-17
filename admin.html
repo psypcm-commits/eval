@@ -491,7 +491,7 @@ function renderEvals(el){
     list.map(function(e){
       var ed = e.orig ? '<div><span class="pill warn" title="ต้นฉบับอาจารย์: '+esc(e.orig.status+(e.orig.action?' · '+e.orig.action:'')+(e.orig.comment?' · '+e.orig.comment:''))+'">แก้ไขแล้ว</span></div>' : '';
       var btn = e.replaced ? '<span class="hint">แทนที่แล้ว</span>' : e.locked ? '<span class="hint" title="อยู่ในรอบทบทวนที่ปิดแล้ว">🔒 '+esc(e.locked)+'</span>' : '<button class="sm" data-edit="wr" data-k="'+esc(e.wr_id)+'">แก้ไขข้อมูลปัญหา</button>';
-      return '<tr class="'+(e.replaced?'repl':'')+'"><td>'+thd(e.week_start)+'</td><td>'+esc(evAY(e))+(e.year_level?' · ปี '+esc(e.year_level):'')+'</td><td>'+esc(short(e.department))+(e.course?'<div class="hint">'+esc(e.course)+'</div>':'')+(e.site&&e.site!=='วพม.'?'<div class="hint">'+esc(e.site)+'</div>':'')+'</td>'+
+      return '<tr class="'+(e.replaced?'repl':'')+'"><td>'+thd(e.week_start)+'</td><td>'+esc(evAY(e))+(e.year_level?' · ปี '+esc(e.year_level):'')+'</td><td>'+esc(short(e.department))+(e.dept_src?'<div><span class="pill" title="'+esc(e.dept_src)+'">ระบบหาภาควิชาให้</span></div>':'')+(e.course?'<div class="hint">'+esc(e.course)+'</div>':'')+(e.site&&e.site!=='วพม.'?'<div class="hint">'+esc(e.site)+'</div>':'')+'</td>'+
         '<td>'+stat(e.status)+ed+(e.review_status?'<div class="hint">'+esc(e.review_status)+'</div>':'')+'</td><td>'+dash(e.action)+'</td><td class="cmt">'+dash(e.comment)+'</td>'+
         '<td><span class="hint">'+esc(e.evaluator_email)+'<br>'+thd(e.submitted_at)+'</span></td><td>'+btn+'</td></tr>'; }).join('')+'</tbody></table></div>';
   if ($('repl')) $('repl').onchange = function(){ SHOWREPL = this.checked; renderEvals(el); };
@@ -559,6 +559,7 @@ function openForm(kind, key){
     h = '<div class="ctx"><b>'+esc(p.name)+'</b> ('+esc(p.id)+')<br>'+esc(rec.department)+(rec.course?' · '+esc(rec.course):'')+'<br>สัปดาห์เริ่ม '+thd(rec.week_start)+' · ประเมินโดย '+esc(rec.evaluator_email)+' เมื่อ '+thd(rec.submitted_at)+
       (rec.orig?'<div class="hint" style="margin-top:6px">ต้นฉบับอาจารย์: '+esc(rec.orig.status)+(rec.orig.action?' · '+esc(rec.orig.action):'')+(rec.orig.comment?' · '+esc(rec.orig.comment):'')+'</div>':'')+'</div>'+
       fld('f_status','สถานะ','<select id="f_status" name="status">'+opts(C.wstatus, rec.status)+'</select>')+
+      (C.teach_dept ? fld('f_wdept','ภาควิชาที่จัดการเรียนการสอน'+(rec.dept_src?' <span class="hint">(ระบบหาให้จากตารางหมุนเวียน)</span>':''),'<select id="f_wdept" name="department">'+opts(C.teach_dept.indexOf(rec.department) < 0 ? [rec.department].concat(C.teach_dept) : C.teach_dept, rec.department)+'</select>') : '')+
       fld('f_action','การดำเนินการของอาจารย์ (จำเป็นเมื่อสถานะ ติดตาม/เฝ้าระวัง/ไม่จบรายวิชา)','<select id="f_action" name="action">'+opts(C.wr_action, rec.action, '— ไม่มี —')+'</select>')+
       fld('f_comment','ความเห็น','<textarea id="f_comment" name="comment" maxlength="2000">'+esc(rec.comment)+'</textarea>'); }
   if (kind === 'rs'){ rec = B.reviews.filter(function(r){ return r.rr_id === key; })[0]; title = 'แก้ไขการจัดการ / แผนดูแล';
