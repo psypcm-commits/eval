@@ -147,6 +147,7 @@ i.sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:
 .sg .sl{font-size:12px;line-height:20px;padding:0 4px;border-radius:4px;background:var(--soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sg.fut .sb{background:none;border:1px dashed var(--faint)}.sg.fut .sl{background:none;border:1px dashed var(--faint);color:var(--faint)}
 .sg.now .sb{outline:2px solid var(--brand2);outline-offset:1px}
+.sg.emp .sb,.pseg.emp .pst,.legend i.emp{background:repeating-linear-gradient(45deg,var(--card),var(--card) 5px,var(--line) 5px,var(--line) 7px);box-shadow:inset 0 0 0 1px var(--line)}
 .rbody{position:relative}.tline{position:absolute;top:0;bottom:0;left:106px;right:0;pointer-events:none}.today{position:absolute;top:0;bottom:0;width:2px;background:var(--brand2)}
 .nlist{display:grid;gap:8px;max-height:40vh;overflow:auto;margin-bottom:12px}
 @media(max-width:600px){.ovtiles{grid-template-columns:1fr}}
@@ -409,7 +410,7 @@ function renderPerson(){
     (withEv.length >= 2 ? '<div class="panel"><h3>เทียบรายปีการศึกษา</h3><div class="hint" style="margin-bottom:8px">กดแถวเพื่อเลือกปี (เหมือนปุ่มด้านบน) · เส้นขาวในแถบ = ค่าเฉลี่ยของเพื่อนร่วมชั้นในปีนั้น</div>'+pCompare(withEv)+'</div>' : '')+
     '<div class="panel"><h3>ผลประเมินแยกตามภาควิชา ตามช่วงเวลาจริง</h3>'+
       '<div class="hint" style="margin-bottom:6px">1 แถว = 1 ปีการศึกษา · 1 ช่อง = 1 rotation/รายวิชา (กว้างตามจำนวนสัปดาห์) · 1 ก้อนสี = ผลประเมิน 1 ครั้ง · เส้นฟ้า = วันนี้ · กรอบเส้นประ = ยังไม่ถึง</div>'+
-      '<div class="legend">'+STAT.map(function(s){ return '<span><i style="'+sw(s)+'"></i>'+s+'</span>'; }).join('')+'</div>'+
+      '<div class="legend">'+STAT.map(function(s){ return '<span><i style="'+sw(s)+'"></i>'+s+'</span>'; }).join('')+'<span><i class="emp"></i>ยังไม่มีผลประเมิน</span></div>'+
       '<div class="rotwrap"><div class="ptlin" id="pTl">'+pTimeline(YS)+'</div></div></div>'+
     '<div class="sub" role="tablist">'+subs.map(function(s){ return '<button role="tab" data-s="'+s[0]+'" aria-selected="'+(SUB===s[0])+'">'+s[1]+'</button>'; }).join('')+'</div>'+
     '<div id="subBody"></div>';
@@ -477,7 +478,7 @@ function pRow(y){
     var fut = s.start > today && !s.ev.length, now = s.start <= today && s.end >= today, L = s.loose ? s.L : pos(s.start), W = s.loose ? s.W : Math.max(pos(addD(s.end,1)) - L, 0.8);
     var lab = early ? (s.course || shortD(s.dept)) : shortD(s.dept);
     var tip = shortD(s.dept)+(s.course?' · '+s.course:'')+'\n'+thd(s.start).replace(/<[^>]+>/g,'')+' – '+thd(s.end).replace(/<[^>]+>/g,'')+'\n'+(fut ? 'ยังไม่ถึง' : s.ev.length ? s.ev.map(function(e){ return thd(e.week_start).replace(/<[^>]+>/g,'')+' '+e.status; }).join('\n') : 'ยังไม่มีผลประเมิน')+(s.loose?'\n(ภาควิชานี้ไม่อยู่ในตารางหมุนเวียนของนักเรียนช่วงนั้น — แสดงตามสัปดาห์ที่ประเมิน)':'');
-    return '<div class="pseg'+(fut?' fut':'')+(now?' now':'')+(s.loose?' loose':'')+'" style="left:'+L+'%;width:'+W+'%;top:'+s.top+'px" title="'+esc(tip)+'">'+
+    return '<div class="pseg'+(fut?' fut':'')+(!fut&&!s.ev.length?' emp':'')+(now?' now':'')+(s.loose?' loose':'')+'" style="left:'+L+'%;width:'+W+'%;top:'+s.top+'px" title="'+esc(tip)+'">'+
       '<div class="pst">'+s.ev.map(function(e){ return '<i style="'+sw(e.status)+'"></i>'; }).join('')+'</div><div class="pl">'+esc(lab)+'</div></div>'; }).join('');
   var tl = today >= t0 && today <= t1 ? '<div class="today" style="left:'+pos(today)+'%"></div>' : '';
   return '<div class="prow"><div class="pn"><b>'+esc(y.ay)+'</b>'+(y.level?'<div class="hint">ปี '+esc(y.level)+'</div>':'')+'</div><div class="ptrk"><div class="rt ax">'+months+'</div>'+
@@ -777,7 +778,7 @@ function renderCohort(){
       '<div class="tile hi"><div class="n">'+nTick+' <span class="u">คน</span></div><div class="q">ติดตามใกล้ชิด (ติ๊กเลือกเอง)</div></div></div>'+
     '<div class="panel"><h3>'+(ys<=3?'ผลประเมินตามรายวิชา (เรียนพร้อมกันทั้งชั้นปี)':'ผลประเมินคู่กับ rotation ของแต่ละกลุ่ม')+'</h3>'+
       '<div class="hint" style="margin-bottom:8px">แท่ง 1 แท่ง = 1 '+(ys<=3?'รายวิชา':'rotation')+' ตามช่วงวันจริง (กว้างตามจำนวนสัปดาห์) แบ่งสีตามสถานะ · ตัวเลข = จำนวนผลประเมิน · เส้นฟ้า = วันนี้ · กรอบเส้นประ = ยังไม่ถึง</div>'+
-      '<div class="legend">'+STAT.map(function(s){ return '<span><i style="'+sw(s)+'"></i>'+s+'</span>'; }).join('')+'</div><div id="rotChart"></div></div>'+
+      '<div class="legend">'+STAT.map(function(s){ return '<span><i style="'+sw(s)+'"></i>'+s+'</span>'; }).join('')+'<span><i class="emp"></i>ยังไม่มีผลประเมิน</span></div><div id="rotChart"></div></div>'+
     '<div class="panel"><div class="ovhead"><h3 id="ovTitle"></h3><div class="seg2"><span class="hint">แสดง</span>'+
       '<button class="sm" data-view="follow" aria-pressed="'+(OVS.view==='follow')+'">ติดตามใกล้ชิด ('+nTick+')</button><button class="sm" data-view="all" aria-pressed="'+(OVS.view==='all')+'">ทุกคนในชั้นปี ('+d.students.length+')</button>'+
       '<span class="hint" style="margin-left:8px">เรียงตาม</span><button class="sm" data-sort="name" aria-pressed="'+(OVS.sort==='name')+'">ชื่อ ก–ฮ</button><button class="sm" data-sort="ratio" aria-pressed="'+(OVS.sort==='ratio')+'">อัตราข้อกังวล มาก→น้อย</button></div></div>'+
@@ -867,7 +868,7 @@ function rotChart(){
   var segHtml = function(s, lane){ var fut = s.start > today, now = !fut && s.end >= today, c = counts(s.ev||[]), t = (s.ev||[]).length;
     var lab = ys <= 3 ? (s.course || shortD(s.dept)) : shortD(s.dept), L = pos(s.start), W = Math.max(pos(addD(s.end,1)) - L, 0.6);
     var tip = shortD(s.dept)+(s.course?' · '+s.course:'')+'\n'+thd(s.start)+' – '+thd(s.end)+'\n'+(fut?'ยังไม่ถึง':(t?STAT.filter(function(x){ return c[x]; }).map(function(x){ return x+' '+c[x]; }).join(' · '):'ยังไม่มีผลประเมิน'));
-    return '<div class="sg'+(fut?' fut':'')+(now?' now':'')+'" style="left:'+L+'%;width:'+W+'%;top:'+(lane*84)+'px" title="'+esc(tip.replace(/<[^>]+>/g,''))+'">'+
+    return '<div class="sg'+(fut?' fut':'')+(!fut&&!t?' emp':'')+(now?' now':'')+'" style="left:'+L+'%;width:'+W+'%;top:'+(lane*84)+'px" title="'+esc(tip.replace(/<[^>]+>/g,''))+'">'+
       '<span class="tt">'+(fut?'':t+(now?' (กำลังอยู่)':''))+'</span><div class="sb">'+(fut||!t?'':STAT.filter(function(x){ return c[x]; }).map(function(x){ return '<i style="flex:'+c[x]+';'+sw(x)+'"></i>'; }).join(''))+'</div>'+
       '<div class="sl">'+esc(lab)+'</div></div>'; };
   var pack = function(list){ var lanes = []; list.sort(function(a,b){ return a.start < b.start ? -1 : 1; }).forEach(function(s){
