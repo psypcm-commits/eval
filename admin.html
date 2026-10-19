@@ -6,9 +6,9 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2316466e'/%3E%3Ccircle cx='32' cy='24' r='9' fill='white'/%3E%3Cpath d='M15 52c2-10 9-15 17-15s15 5 17 15' fill='white'/%3E%3C/svg%3E">
 <style>
 :root{--bg:#f4f6f9;--card:#fff;--ink:#1d2733;--muted:#5d6b7a;--faint:#8a96a3;--line:#dde3ea;--soft:#eef2f6;--brand:#16466e;--brand2:#1f6aa5;--hl:#e8f1fb;
---s0:#1a7f5a;--s1:#5d6b7a;--s2:#b7791f;--s3:#c62828;--s4:#6a1b9a;--s5:#000;--s5line:#8a96a3;--err:#c62828;--ok:#1a7f5a;--warnbg:#fff3d6;--warnink:#6b4a00}
+--s0:#1a7f5a;--s1:#d9dfe5;--s1ink:#1d2733;--s2:#b7791f;--s3:#c62828;--s4:#6a1b9a;--s5:#000;--s5line:#8a96a3;--err:#c62828;--ok:#1a7f5a;--warnbg:#fff3d6;--warnink:#6b4a00;--donebg:#f1f9f4;--curbg:#fff8e6;--curline:#e2b15e}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#121416;--card:#1a1c1e;--ink:#e6e8eb;--muted:#a3adb8;--faint:#7d8792;--line:#30353a;--soft:#24282c;
---brand:#0f2f4b;--brand2:#3b86c6;--hl:#1d2a38;--err:#ef7070;--ok:#4cc38a;--warnbg:#3d3010;--warnink:#ffd67a}}
+--brand:#0f2f4b;--brand2:#3b86c6;--hl:#1d2a38;--err:#ef7070;--ok:#4cc38a;--warnbg:#3d3010;--warnink:#ffd67a;--donebg:#16261d;--curbg:#2e2711;--curline:#a8823f}}
 *{box-sizing:border-box}
 body{margin:0;font-family:"Sarabun","Noto Sans Thai",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:15px}
 html,body{overflow-x:hidden}
@@ -42,7 +42,7 @@ nav.tabs button[aria-selected=true]{color:var(--ink);font-weight:600;border-bott
 .pill{display:inline-block;font-size:12px;padding:2px 8px;border-radius:999px;background:var(--soft);color:var(--ink);white-space:nowrap}
 .pill.warn{background:var(--warnbg);color:var(--warnink)}
 .st{display:inline-flex;align-items:center;gap:4px;font-size:13px;padding:2px 8px;border-radius:6px;color:#fff;white-space:nowrap}
-.st.s-โดดเด่น{background:var(--s0)}.st.s-อยู่ในเกณฑ์,.st.s-ปกติ{background:var(--s1)}.st.s-ติดตาม{background:var(--s2)}.st.s-เฝ้าระวัง{background:var(--s3)}.st.s-ไม่จบรายวิชา{background:var(--s4)}.st.s-ไม่สามารถประเมินได้{background:var(--s5);box-shadow:inset 0 0 0 1px var(--s5line)}
+.st.s-โดดเด่น{background:var(--s0)}.st.s-อยู่ในเกณฑ์,.st.s-ปกติ{background:var(--s1);color:var(--s1ink)}.st.s-ติดตาม{background:var(--s2)}.st.s-เฝ้าระวัง{background:var(--s3)}.st.s-ไม่จบรายวิชา{background:var(--s4)}.st.s-ไม่สามารถประเมินได้{background:var(--s5);box-shadow:inset 0 0 0 1px var(--s5line)}
 .prof{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start}
 .prof h2{font-size:19px;margin:0}
 .tiles{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;margin-top:12px}
@@ -150,6 +150,43 @@ i.sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:
 .rbody{position:relative}.tline{position:absolute;top:0;bottom:0;left:106px;right:0;pointer-events:none}.today{position:absolute;top:0;bottom:0;width:2px;background:var(--brand2)}
 .nlist{display:grid;gap:8px;max-height:40vh;overflow:auto;margin-bottom:12px}
 @media(max-width:600px){.ovtiles{grid-template-columns:1fr}}
+/* โหมดประชุม / เตรียม-ปิดรอบ */
+.cbtns{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto}
+.mm-bar{display:flex;gap:14px;align-items:center;flex-wrap:wrap}.mm-id{font-size:20px;font-weight:700;word-break:break-all}
+.mm-prog{flex:1;min-width:220px}.mm-track{height:10px;border-radius:999px;background:var(--soft);overflow:hidden;margin-top:6px}.mm-track i{display:block;height:100%;background:var(--ok)}
+.mm-tools{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:14px 0 10px}.mm-tools input[type=search]{flex:1 1 200px;min-width:0;min-height:36px}
+.chip{border-radius:999px;padding:6px 12px;font-size:13px;background:var(--soft)}.chip[aria-pressed=true]{background:var(--brand2);color:#fff}
+table.mm{min-width:1200px;table-layout:fixed}table.mm th{white-space:normal}table.mm td{white-space:normal;overflow-wrap:anywhere}
+table.mm input:not([type=checkbox]),table.mm textarea{width:100%;font-size:13px;padding:6px 8px}table.mm textarea{min-height:52px;margin-top:6px}
+table.mm .gap{margin-top:6px}table.mm input.saved,table.mm textarea.saved{border-color:var(--ok);box-shadow:0 0 0 2px var(--ok)}
+tr.mm-done td{background:var(--donebg)}tr.mm-cur td{background:var(--curbg)}tr.mm-cur td:first-child{box-shadow:inset 3px 0 0 var(--curline)}
+.mm-pills{display:flex;gap:4px}.mm-n{min-width:26px;text-align:center;color:#fff;border-radius:6px;padding:2px 6px;font-weight:700;font-size:13px}.mm-n.z{background:var(--soft);color:var(--faint)}
+.mm-esc{margin-top:6px;font-size:12px;font-weight:700;color:var(--err)}.mm-ok{color:var(--ok);font-size:13px;font-weight:600}.mm-busy{color:var(--warnink);font-size:13px;font-weight:600}.mm-bad{color:var(--err);font-size:13px;font-weight:600}
+label.ck{display:flex;gap:6px;align-items:center;font-size:13px;margin-top:8px;cursor:pointer}label.ck input{width:18px;height:18px;flex:none;margin:0;accent-color:var(--brand2)}label.ck.on{color:var(--ok);font-weight:600}
+.pbar{display:flex;height:10px;border-radius:3px;overflow:hidden;margin-top:6px;background:var(--soft)}.pbar i{display:block;height:100%}
+details.cm summary{cursor:pointer;color:var(--brand2);font-size:13px;margin-top:6px}details.cm div{white-space:pre-wrap;font-size:13px;max-height:220px;overflow:auto;margin-top:4px}
+.idbox{background:var(--hl);border-radius:8px;padding:12px}.idbox .code{font-size:22px;font-weight:700;color:var(--brand2);word-break:break-all}
+.warnbox{background:var(--warnbg);color:var(--warnink);border-radius:8px;padding:10px 12px;margin-bottom:12px}
+.escbox{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:6px 12px;font-size:14px}.escbox b{color:var(--err)}
+#printArea{display:none}
+@media print{
+  body.printing>*:not(#printArea){display:none!important}body.printing #printArea{display:block}
+  body.printing{background:#fff;color:#000;font-size:11pt}
+  @page{size:A4;margin:14mm 12mm}
+  .ps{color:#000;font-family:"Sarabun","Noto Sans Thai",sans-serif}
+  .ps-top{border-bottom:2px solid #16466e;padding-bottom:6px;margin-bottom:10px;line-height:1.6}.ps-t{font-size:16pt;font-weight:700;color:#16466e}
+  .ps h2{font-size:12.5pt;margin:14px 0 6px;color:#16466e;break-after:avoid}
+  .ps-sum{width:100%;border-collapse:collapse;min-width:0}.ps-sum td{border:1px solid #c9d1da;text-align:center;padding:6px;font-size:10pt;color:#333}.ps-sum b{font-size:14pt;color:#000}
+  .ps-box{border:1px solid #c9d1da;border-radius:6px;padding:8px 10px;white-space:pre-wrap;min-height:40px}
+  .ps-tbl{width:100%;border-collapse:collapse;min-width:0}.ps-tbl th,.ps-tbl td{border:1px solid #c9d1da;padding:5px 7px;font-size:10pt;vertical-align:top;text-align:left;background:none;color:#000;white-space:normal}.ps-tbl th{background:#eef2f6}
+  .ps-tbl td span,.ps-h span{color:#555;font-size:9.5pt}.ps-tbl tr{break-inside:avoid}
+  .ps-stu{border:1px solid #c9d1da;border-radius:6px;padding:7px 10px;margin-bottom:8px;break-inside:avoid}.ps-h{margin-bottom:4px}
+  .ps-kv{width:100%;border-collapse:collapse;min-width:0}.ps-kv th{width:150px;font-weight:400;color:#555;background:none;font-size:10pt;padding:2px 8px 2px 0;border:0;white-space:normal}
+  .ps-kv td{font-size:10.5pt;padding:2px 0;border:0;white-space:normal;color:#000}.ps-cm{white-space:pre-wrap;font-size:9.5pt}
+  .ps-miss{color:#b3261e}.ps-break{break-before:auto}
+  .ps-sign{display:flex;justify-content:space-around;margin-top:28px;text-align:center;line-height:2;break-inside:avoid}
+  .ps-foot{margin-top:16px;border-top:1px solid #c9d1da;padding-top:4px;font-size:8.5pt;color:#555}
+}
 </style></head>
 <body>
 <header><div><h1>ผู้ดูแลระบบสูงสุด · ระบบติดตามนักเรียนแพทย์</h1><div class="who" id="who"></div></div><a href="#" id="signout" class="hidden">ออกจากระบบ</a></header>
@@ -184,7 +221,9 @@ i.sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:
   </section>
 
   <section id="v-cohort" class="hidden">
-    <div class="filters"><label>ชั้นปี <select id="cYear"></select></label><label>ปีการศึกษา <select id="cAy"><option value="">ปัจจุบัน</option></select></label><span class="hint" id="cNote"></span></div>
+    <div class="filters"><label>ชั้นปี <select id="cYear"></select></label><label id="cAyL">ปีการศึกษา <select id="cAy"><option value="">ปัจจุบัน</option></select></label><span class="hint" id="cNote"></span>
+      <span class="cbtns"><button class="sm" id="cPrep" type="button">+ เตรียมข้อมูลรอบ…</button><button class="sm pri" id="cMeet" type="button" aria-pressed="false">🗓 โหมดประชุม</button></span></div>
+    <div id="meetBody" class="hidden"></div>
     <div id="cohortBody"><div class="panel empty">กำลังโหลด...</div></div>
   </section>
 
@@ -215,6 +254,7 @@ i.sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:
   </form>
 </dialog>
 <div id="toast" class="hidden" role="status" aria-live="polite"></div>
+<div id="printArea"></div>
 
 <script>
 var CONFIG = {
@@ -359,12 +399,12 @@ function renderPerson(){
   $('personBody').innerHTML =
     '<div class="panel"><div class="prof"><div><h2>'+esc(p.name)+'</h2><div class="hint">'+esc(p.id)+' · ชั้นปี '+esc(p.year)+(p.group?' · กลุ่ม '+esc(p.group):'')+(p.sex?' · '+esc(p.sex):'')+'</div>'+
       (p.note?'<div class="hint" style="margin-top:4px">หมายเหตุ: '+esc(p.note)+'</div>':'')+'</div>'+
-      '<div class="pflag"><label class="fol'+(on?' on':'')+'"><input type="checkbox" id="pFol"'+(on?' checked':'')+'> ติดตามใกล้ชิด</label>'+
+      '<div class="pflag">'+escBox(B.escalation)+'<label class="fol'+(on?' on':'')+'"><input type="checkbox" id="pFol"'+(on?' checked':'')+'> ติดตามใกล้ชิด</label>'+
         '<span class="pill'+(p.status!=='กำลังศึกษา'?' warn':'')+'">'+esc(p.status)+'</span>'+
         (on && (fol.next_date || fol.owner) ? '<div class="hint" style="width:100%;text-align:right">'+(fol.next_date?'นัด '+thd(fol.next_date):'')+(fol.next_date&&fol.owner?' · ':'')+esc(fol.owner||'')+'</div>' : '')+'</div></div>'+
       '<div class="ybar"><span class="hint">ปีการศึกษา</span><div class="seg2">'+YS.map(function(y){ return yb(y.ay, esc(y.ay)+(y.level?' (ปี '+esc(y.level)+')':'')+(y.cur?' ปัจจุบัน':'')); }).join('')+yb('all','ทุกปี')+'</div></div>'+
       '<div class="ptiles">'+tiles.map(function(t){ return '<div class="tile"><div class="n">'+t[0]+' <span class="u">'+t[1]+'</span></div><div class="q">'+t[2]+'</div>'+(t[3]?'<div class="s '+t[4]+'">'+t[3]+'</div>':'')+'</div>'; }).join('')+'</div>'+
-      (rv ? '<div class="note">รอบทบทวนล่าสุด '+esc(rv.round_id)+': '+esc(rv.priority||'—')+(rv.progress?' · พัฒนาการ '+esc(rv.progress):'')+(rv.decision?' · มติ '+esc(rv.decision):'')+(rv.escalation?' · <b>'+esc(rv.escalation)+'</b>':'')+'</div>' : '')+
+      (rv ? '<div class="note">รอบทบทวนล่าสุด '+esc(rv.round_id)+': '+esc(rv.priority||'—')+(rv.progress?' · พัฒนาการ '+esc(rv.progress):'')+(rv.decision?' · มติ '+esc(rv.decision):'')+'</div>' : '')+
     '</div>'+
     (withEv.length >= 2 ? '<div class="panel"><h3>เทียบรายปีการศึกษา</h3><div class="hint" style="margin-bottom:8px">กดแถวเพื่อเลือกปี (เหมือนปุ่มด้านบน) · เส้นขาวในแถบ = ค่าเฉลี่ยของเพื่อนร่วมชั้นในปีนั้น</div>'+pCompare(withEv)+'</div>' : '')+
     '<div class="panel"><h3>ผลประเมินแยกตามภาควิชา ตามช่วงเวลาจริง</h3>'+
@@ -380,6 +420,9 @@ function renderPerson(){
     api('adm_follow', { id:id, active:v, reqId: rid() }).then(function(r){ if (OV && OV.follow) OV.follow[id] = r.rec; if (B && B.profile.id === id){ B.follow = r.rec; renderPerson(); }
       toast(r.message + (v && (r.rec.next_date||r.rec.owner) ? ' · ใช้วันนัด/ผู้รับผิดชอบจากแผนรอบทบทวนล่าสุด' : '')); })
       .catch(function(e){ cb.checked = !v; cb.disabled = false; if (relogin(e, function(){})) return; toast('ยังไม่ได้บันทึก: '+e.message); }); };
+  if ($('pHandled')) $('pHandled').onchange = function(){ var cb = this, v = cb.checked, id = p.id; cb.disabled = true;
+    setHandled(id, v, '').then(function(esc2){ if (B && B.profile.id === id){ B.escalation = esc2; renderPerson(); } })
+      .catch(function(){ cb.checked = !v; cb.disabled = false; }); };
   [].forEach.call(document.querySelectorAll('.sub button'), function(b){ b.onclick = function(){ if (SUB === 'psy' && b.dataset.s !== 'psy') psyLock(); SUB = b.dataset.s;
     [].forEach.call(document.querySelectorAll('.sub button'), function(x){ x.setAttribute('aria-selected', String(x === b)); }); renderSub(); }; });
   renderSub();
@@ -502,14 +545,15 @@ function renderReviews(el){
   if (!B.reviews.length){ el.innerHTML = '<div class="panel empty">ยังไม่มีรอบทบทวนที่ครอบคลุมนักเรียนคนนี้</div>'; return; }
   el.innerHTML = '<div class="cards">'+B.reviews.map(function(r){
     var btn = r.locked ? '<span class="hint">🔒 รอบปิดแล้ว</span>' : '<button class="sm pri" data-edit="rs" data-k="'+esc(r.rr_id)+'">แก้ไขการจัดการ/แผนดูแล</button>';
-    return '<div class="card"><div class="hd"><div><b>'+esc(r.round_id)+'</b> <span class="hint">ข้อมูล '+thd(r.period[0])+' – '+thd(r.period[1])+' · '+esc(r.round_status||'')+'</span></div>'+btn+'</div>'+
+    return '<div class="card"><div class="hd"><div><b>'+esc(r.round_id)+'</b> <span class="hint">'+(r.round_no?'รอบที่ '+esc(r.round_no)+' · ':'')+(r.meeting?'ประชุม '+thd(r.meeting)+' · ':'')+'ข้อมูล '+thd(r.period[0])+' – '+thd(r.period[1])+' · '+esc(r.round_status||'')+'</span></div>'+btn+'</div>'+
       '<dl class="kv"><dt>ลำดับการพิจารณา</dt><dd>'+dash(r.priority)+'</dd>'+
       '<dt>บันทึกในช่วงนี้</dt><dd>'+dash(r.n_records)+' บันทึก · โดดเด่น '+(r.n_star||0)+' · ติดตาม '+(r.n_follow||0)+' · เฝ้าระวัง '+(r.n_watch||0)+' · ไม่จบรายวิชา '+(r.n_fail||0)+'</dd>'+
       '<dt>ข้อกังวลเทียบรอบก่อน</dt><dd>'+dash(r.vs_prev)+'</dd>'+
       '<dt>พัฒนาการโดยรวม</dt><dd>'+dash(r.progress)+'</dd><dt>ผลของแผนรอบก่อน</dt><dd>'+dash(r.prev_outcome)+'</dd>'+
       '<dt>มติ/การดำเนินการ</dt><dd>'+dash(r.decision)+'</dd><dt>แผน</dt><dd>'+dash(r.plan)+'</dd>'+
       '<dt>ผู้รับผิดชอบ</dt><dd>'+dash(r.plan_owner)+'</dd><dt>วันนัดติดตามตามแผน</dt><dd>'+(r.next_check?thd(r.next_check):'<span class="hint">—</span>')+'</dd>'+
-      (r.escalation?'<dt>ถึงเกณฑ์แจ้งกรรมการ</dt><dd><b>'+esc(r.escalation)+'</b></dd>':'')+
+      '<dt>ติดตามต่อรอบหน้า</dt><dd>'+(r.follow_next==='ใช่'?'✓ ใช่'+(r.follow_topic?' — '+esc(r.follow_topic):''):r.follow_next==='ไม่ใช่'?'ไม่ — จบเรื่องนี้':'<span class="hint">—</span>')+'</dd>'+
+      (r.escalation?'<dt>ถึงเกณฑ์แจ้งกรรมการ <span class="hint">(ตอนเตรียมข้อมูลรอบ)</span></dt><dd><b>'+esc(r.escalation)+'</b></dd>':'')+
       (r.reviewer?'<dt>บันทึกโดย</dt><dd class="hint">'+esc(r.reviewer)+' · '+thd(r.reviewed_at)+'</dd>':'')+'</dl></div>'; }).join('')+'</div>'+
     '<div class="note">แก้ไขได้เฉพาะรอบที่ยังไม่ปิด · แต่ละรอบเป็นบันทึกแยก การแก้รอบนี้ไม่เขียนทับรอบก่อน</div>';
   bindEdits(el);
@@ -564,12 +608,14 @@ function openForm(kind, key){
       fld('f_comment','ความเห็น','<textarea id="f_comment" name="comment" maxlength="2000">'+esc(rec.comment)+'</textarea>'); }
   if (kind === 'rs'){ rec = B.reviews.filter(function(r){ return r.rr_id === key; })[0]; title = 'แก้ไขการจัดการ / แผนดูแล';
     h = '<div class="ctx"><b>'+esc(p.name)+'</b> ('+esc(p.id)+')<br>รอบ '+esc(rec.round_id)+' · ข้อมูล '+thd(rec.period[0])+' – '+thd(rec.period[1])+'<br>'+esc(rec.priority||'')+' · '+(rec.n_records||0)+' บันทึก</div>'+
-      '<div class="grid2">'+fld('f_progress','พัฒนาการโดยรวม','<select id="f_progress" name="progress">'+opts(C.rr_progress, rec.progress, '—')+'</select>')+
-      fld('f_prev_outcome','ผลของแผนรอบก่อน','<select id="f_prev_outcome" name="prev_outcome">'+opts(C.rr_outcome, rec.prev_outcome, '—')+'</select>')+'</div>'+
-      fld('f_decision','มติ/การดำเนินการ','<select id="f_decision" name="decision">'+opts(C.rr_decision, rec.decision, '—')+'</select>')+
+      '<div class="grid2">'+fld('f_progress','พัฒนาการโดยรวม','<input id="f_progress" name="progress" maxlength="2000" value="'+esc(rec.progress)+'" placeholder="พิมพ์ได้อิสระ เช่น ดีขึ้น มาตรงเวลามากขึ้น">')+
+      fld('f_prev_outcome','ผลของแผนรอบก่อน','<input id="f_prev_outcome" name="prev_outcome" maxlength="2000" value="'+esc(rec.prev_outcome)+'" placeholder="พิมพ์ได้อิสระ">')+'</div>'+
+      fld('f_decision','มติ/การดำเนินการ','<input id="f_decision" name="decision" maxlength="2000" value="'+esc(rec.decision)+'" placeholder="พิมพ์มติของที่ประชุม">')+
       fld('f_plan','แผน (ห้ามใส่ข้อมูลสุขภาพ/การวินิจฉัย)','<textarea id="f_plan" name="plan" maxlength="2000">'+esc(rec.plan)+'</textarea>')+
       '<div class="grid2">'+fld('f_plan_owner','ผู้รับผิดชอบ','<input id="f_plan_owner" name="plan_owner" value="'+esc(rec.plan_owner)+'">')+
-      fld('f_next_check','วันติดตามผล','<input type="date" id="f_next_check" name="next_check" value="'+esc(String(rec.next_check||'').slice(0,10))+'">')+'</div>'; }
+      fld('f_next_check','วันติดตามผล','<input type="date" id="f_next_check" name="next_check" value="'+esc(String(rec.next_check||'').slice(0,10))+'">')+'</div>'+
+      '<label class="ck'+(folOn(rec)?' on':'')+'" style="font-size:14px;margin-bottom:12px"><input type="checkbox" id="f_follow_next" name="follow_next" data-init="'+(folOn(rec)?'1':'')+'"'+(folOn(rec)?' checked':'')+'> ติดตามต่อรอบหน้า <span class="hint">(ติ๊กให้เองเมื่อมีมติ · เอาออก = จบเรื่องนี้)</span></label>'+
+      fld('f_follow_topic','เรื่องที่ติดตามต่อ (ไม่บังคับ)','<input id="f_follow_topic" name="follow_topic" maxlength="2000" value="'+esc(rec.follow_topic)+'" placeholder="เช่น การมาตรงเวลา การส่งบันทึกผู้ป่วย">'); }
   if (kind === 'af'){ rec = key ? B.affective.filter(function(a){ return a.key === key; })[0] : null; title = rec ? 'แก้ไขคะแนนจิตพิสัย' : 'เพิ่มคะแนนจิตพิสัย';
     h = '<div class="ctx"><b>'+esc(p.name)+'</b> ('+esc(p.id)+') · ชั้นปีปัจจุบัน '+esc(p.year)+'</div><div class="grid2">'+
       fld('f_acad_year','ปีการศึกษา (พ.ศ.)','<input id="f_acad_year" name="acad_year" inputmode="numeric" maxlength="4" value="'+esc(rec?rec.acad_year:acadYear(INIT.today))+'">')+
@@ -592,8 +638,8 @@ function openForm(kind, key){
       fld('f_credits','หน่วยกิต (ถ้ามี)','<input id="f_credits" name="credits" inputmode="decimal" value="'+esc(rec?rec.credits:'')+'">')+'</div>'+
       fld('f_note','หมายเหตุ','<input id="f_note" name="note" value="'+esc(rec?rec.note:'')+'">');
     FORM_ROTS = rots; }
-  var isNew = !rec;
-  h += fld('f_reason', isNew ? 'หมายเหตุการเพิ่ม (ถ้ามี)' : 'เหตุผลการแก้ไข <b style="color:var(--err)">*</b>', '<textarea id="f_reason" maxlength="500" placeholder="'+(isNew?'เช่น ผลจากคณะกรรมการรายวิชา':'เช่น อาจารย์ผู้ประเมินแจ้งแก้ไขทางอีเมลวันที่ ...')+'"></textarea>')+
+  var isNew = !rec, rsSoft = kind === 'rs';
+  h += fld('f_reason', isNew ? 'หมายเหตุการเพิ่ม (ถ้ามี)' : rsSoft ? 'เหตุผลการแก้ไข <span class="hint">(ไม่บังคับเมื่อกรอกครั้งแรก · บังคับเมื่อแก้ค่าที่บันทึกไว้แล้ว)</span>' : 'เหตุผลการแก้ไข <b style="color:var(--err)">*</b>', '<textarea id="f_reason" maxlength="500" placeholder="'+(isNew?'เช่น ผลจากคณะกรรมการรายวิชา':'เช่น อาจารย์ผู้ประเมินแจ้งแก้ไขทางอีเมลวันที่ ...')+'"></textarea>')+
     '<div class="msg err" id="f_msg" role="alert"></div>';
   FORM = { kind:kind, key: rec ? (kind==='wr'?rec.wr_id:kind==='rs'?rec.rr_id:rec.key) : '', ver: rec ? rec.ver : '', rec: rec, reqId: rid(), busy:false };
   $('dlgTitle').textContent = title; $('dlgBody').innerHTML = h; $('dlgSave').disabled = false; $('dlgSave').textContent = 'บันทึก';
@@ -607,12 +653,15 @@ $('dlg').addEventListener('cancel', function(e){ if (FORM && FORM.busy) e.preven
 $('dlgForm').onsubmit = function(e){
   e.preventDefault(); if (!FORM || FORM.busy) return;
   var f = {}, r = FORM.rec;
-  [].forEach.call($('dlgBody').querySelectorAll('[name]'), function(x){ var v = x.value.trim(), old = r ? String(r[x.name]==null?'':r[x.name]) : '';
+  [].forEach.call($('dlgBody').querySelectorAll('[name]'), function(x){
+    if (x.type === 'checkbox'){ if (x.checked !== !!x.dataset.init) f[x.name] = x.checked ? 'ใช่' : 'ไม่ใช่'; return; }
+    var v = x.value.trim(), old = r ? String(r[x.name]==null?'':r[x.name]) : '';
     if (x.type === 'date') old = old.slice(0,10);
     if (!r || v !== old) f[x.name] = v; });
   var reason = $('f_reason').value.trim(), msg = $('f_msg');
   if (r && !Object.keys(f).length){ msg.textContent = 'ยังไม่มีการเปลี่ยนแปลง'; return; }
-  if (r && reason.length < 3){ msg.textContent = 'กรุณาระบุเหตุผลการแก้ไข'; $('f_reason').focus(); return; }
+  var needR = FORM.kind !== 'rs' ? true : !sameSession(r) && Object.keys(f).some(function(k){ return k !== 'follow_next' && String(r[k]==null?'':r[k]) !== ''; });
+  if (r && needR && reason.length < 3){ msg.textContent = 'กรุณาระบุเหตุผลการแก้ไข (แก้ค่าที่บันทึกไว้แล้ว)'; $('f_reason').focus(); return; }
   if (FORM.kind === 'af' && f.score !== undefined && f.score !== '' && (+f.score < 0 || +f.score > 100)){ msg.textContent = 'คะแนนต้องอยู่ระหว่าง 0–100'; return; }
   FORM.busy = true; $('dlgSave').disabled = true; $('dlgSave').textContent = 'กำลังบันทึก...'; msg.textContent = '';
   var kind = FORM.kind;
@@ -688,7 +737,7 @@ window.addEventListener('pagehide', function(){ psyLock(true); });
 var OV = null, OVS = { view:'follow', sort:'ratio', q:'', st:'', min:1, dmin:'', per:'ay', from:'', to:'', grp:'', exp:{} };
 try { var _ovs = JSON.parse(localStorage.getItem('ovs') || '{}'); if (_ovs.view) OVS.view = _ovs.view; if (_ovs.sort) OVS.sort = _ovs.sort; } catch(_){}
 function ovSave(){ try { localStorage.setItem('ovs', JSON.stringify({ view:OVS.view, sort:OVS.sort })); } catch(_){} }
-$('cYear').onchange = function(){ $('cAy').value = ''; loadCohort(); };
+$('cYear').onchange = function(){ $('cAy').value = ''; if (MEET.on){ LOADED.cohort = false; loadMeeting(); } else loadCohort(); };
 $('cAy').onchange = loadCohort;
 function loadCohort(){
   LOADED.cohort = true; $('cohortBody').innerHTML = '<div class="panel empty">กำลังโหลด...</div>';
@@ -881,11 +930,275 @@ function roundTable(){
     : '<div class="hint">ยังไม่มีรอบทบทวนของชั้นปีนี้ในปีการศึกษา '+esc(d.ay)+'</div>';
   [].forEach.call(document.querySelectorAll('[data-rnote]'), function(b){ b.onclick = function(){ openRoundNote(b.dataset.rnote); }; });
 }
+/* ---------- เกณฑ์แจ้งกรรมการ + จัดการแล้ว ---------- */
+function folOn(r){ return !!r && (r.follow_next === 'ใช่' || (!r.follow_next && !!String(r.decision||'').trim())); }
+function sameSession(r){ return !!(r && r.reviewer && INIT && String(r.reviewer).toLowerCase() === String(INIT.email).toLowerCase() && String(r.reviewed_at||'').slice(0,10) === INIT.today); }
+function escBox(e){
+  if (!e) return '';
+  var L = e.lim || { verbal:5, punish:2 }, cnt = 'วาจา '+e.verbal+'/'+L.verbal+' · ลงโทษ '+e.punish+'/'+L.punish;
+  if (e.hit) return '<div class="escbox"><b>'+esc(e.text)+'</b><label class="ck" style="margin:0"><input type="checkbox" id="pHandled"> จัดการแล้ว</label></div>';
+  if (e.handledAt) return '<div class="escbox"><label class="ck on" style="margin:0"><input type="checkbox" id="pHandled" checked> จัดการแล้ว · นับใหม่ตั้งแต่ '+thd(e.handledAt)+'</label><span class="hint">นับตั้งแต่นั้น: '+cnt+'</span></div>';
+  if (e.verbal || e.punish) return '<span class="hint" title="เกณฑ์แจ้งกรรมการ นับต่อเนื่องข้ามปีการศึกษา">เกณฑ์แจ้งกรรมการ: '+cnt+'</span>';
+  return '';
+}
+function setHandled(id, on, roundId){
+  return api('adm_handled', { id:id, on:on, roundId:roundId||'', reqId: rid() }).then(function(r){ toast(r.message); return r.esc; })
+    .catch(function(e){ if (!relogin(e, function(){})) toast('ยังไม่ได้บันทึก: '+e.message); throw e; });
+}
+
+/* ---------- โหมดประชุม (ภาพรวมชั้นปี) ---------- */
+var MEET = { on:false, d:null, f:'ต้องพิจารณา', q:'', qs:{}, msg:'' };
+var MON_EN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function setMeetUI(){
+  $('cMeet').setAttribute('aria-pressed', String(MEET.on)); $('cMeet').textContent = MEET.on ? '← กลับภาพรวมชั้นปี' : '🗓 โหมดประชุม';
+  $('meetBody').classList.toggle('hidden', !MEET.on); $('cohortBody').classList.toggle('hidden', MEET.on);
+  $('cAyL').classList.toggle('hidden', MEET.on); $('cNote').classList.toggle('hidden', MEET.on);
+}
+$('cMeet').onclick = function(){ MEET.on = !MEET.on; setMeetUI(); if (MEET.on) loadMeeting(); else if (!LOADED.cohort || !OV || OV.year !== $('cYear').value) loadCohort(); };
+function loadMeeting(roundId){
+  $('meetBody').innerHTML = '<div class="panel empty">กำลังโหลด...</div>';
+  api('adm_meeting', { year: $('cYear').value, round: roundId || '' }).then(function(d){ MEET.d = d; MEET.qs = {}; renderMeeting(); })
+    .catch(function(e){ if (relogin(e, function(){ loadMeeting(roundId); })) return; $('meetBody').innerHTML = '<div class="panel empty">'+esc(e.message)+'</div>'; });
+}
+function mmCounts(){ var d = MEET.d, c = { 'ทุกคน': d.rows.length }; d.rows.forEach(function(r){ c[r.priority] = (c[r.priority]||0) + 1; }); return c; }
+function mmProg(){
+  var d = MEET.d, pri = d.rows.filter(function(r){ return r.priority === 'ต้องพิจารณา'; }), dp = pri.filter(function(r){ return String(r.decision||'').trim(); }).length;
+  var all = d.rows.filter(function(r){ return String(r.decision||'').trim(); }).length;
+  if (!$('mmProg')) return;
+  $('mmProg').innerHTML = '<div>บันทึกมติแล้ว <b>'+dp+'/'+pri.length+'</b> คนในกลุ่ม "ต้องพิจารณา" <span class="hint">· ทั้งชั้นปีมีมติแล้ว '+all+'/'+d.rows.length+' คน</span></div>'+
+    '<div class="mm-track"><i style="width:'+(pri.length ? Math.round(dp*100/pri.length) : 0)+'%"></i></div>';
+}
+function renderMeeting(){
+  var d = MEET.d, r = d.round, el = $('meetBody');
+  var sel = d.rounds.length ? '<label class="hint">รอบ <select id="mmRound">'+d.rounds.slice().reverse().map(function(x){ return '<option value="'+esc(x.id)+'"'+(r&&x.id===r.id?' selected':'')+'>'+esc(x.id)+(x.status==='ปิดรอบ'?' (ปิดแล้ว)':'')+'</option>'; }).join('')+'</select></label>' : '';
+  if (!r){ el.innerHTML = '<div class="panel empty">ชั้นปี '+esc(d.year)+' ยังไม่มีรอบทบทวนที่เปิดอยู่<div style="margin-top:10px"><button class="pri" id="mmPrep">+ เตรียมข้อมูลรอบ…</button></div>'+(sel?'<div style="margin-top:10px">ดูรอบที่ปิดแล้ว: '+sel+'</div>':'')+'</div>';
+    $('mmPrep').onclick = openPrep; if ($('mmRound')) $('mmRound').onchange = function(){ loadMeeting(this.value); }; return; }
+  var closed = r.status === 'ปิดรอบ', c = mmCounts();
+  el.innerHTML = '<div class="panel">'+(MEET.msg?'<div class="warnbox" style="white-space:pre-wrap">'+esc(MEET.msg)+'</div>':'')+
+    '<div class="mm-bar"><div><div class="hint">'+(closed?'รอบที่ปิดแล้ว (ดูอย่างเดียว)':'รอบทบทวนที่ยังไม่ปิด')+'</div><div class="mm-id">'+esc(r.id)+'</div>'+
+      '<div class="hint">รอบที่ '+esc(r.rn||r.round)+' · ประชุม '+(r.meeting?thd(r.meeting):'ยังไม่ระบุ')+' · ข้อมูล '+thd(r.start)+' – '+thd(r.end)+'</div></div>'+
+      '<div class="mm-prog" id="mmProg"></div>'+sel+
+      '<button id="mmNote" type="button">📝 ข้อสรุปที่ประชุม</button><button id="mmPdf" type="button">📄 สรุปผลประชุม (PDF)</button>'+
+      (closed?'<span class="pill">🔒 ปิดรอบแล้ว</span>':'<button class="danger" id="mmClose">ปิดรอบ…</button>')+'</div>'+
+    (r.conclusion?'<div class="note" style="white-space:pre-wrap"><b>ข้อสรุปที่ประชุม:</b> '+esc(r.conclusion)+'</div>':'')+
+    '<div class="mm-tools">'+['ต้องพิจารณา','ดูประกอบ','โดดเด่น','ทุกคน'].map(function(k){ return '<button class="chip" data-mf="'+k+'" aria-pressed="'+(MEET.f===k)+'">'+k+' ('+(c[k]||0)+')</button>'; }).join('')+
+      '<input type="search" id="mmQ" placeholder="ค้นหาชื่อหรือรหัส" value="'+esc(MEET.q)+'"></div>'+
+    '<div class="tablewrap"><table class="mm"><colgroup><col style="width:190px"><col style="width:150px"><col style="width:150px"><col style="width:160px"><col style="width:230px"><col style="width:150px"><col style="width:170px"></colgroup>'+
+      '<thead><tr><th>นักเรียน · เกณฑ์แจ้งกรรมการ</th><th>ข้อกังวลรอบนี้</th><th>มติ / แผนรอบก่อน</th><th>พัฒนาการ / ผลของแผนรอบก่อน</th><th>มติ / แผน</th><th>ผู้รับผิดชอบ / วันติดตามผล</th><th>สถานะ</th></tr></thead><tbody id="mmRows"></tbody></table></div>'+
+    '<div class="note">ทุกช่องพิมพ์ได้อิสระ · บันทึกอัตโนมัติเมื่อออกจากช่อง (เก็บประวัติทุกครั้ง) · กรอกครั้งแรกไม่ต้องใส่เหตุผล · "ติดตามต่อรอบหน้า" ติ๊กให้เองเมื่อมีมติ เอาออก = จบเรื่อง · '+
+      '"จัดการแล้ว" = หยุดนับเกณฑ์และเริ่มนับใหม่ตั้งแต่เวลาที่ติ๊ก (เอาติ๊กออก = กลับไปนับแบบเดิม) · ห้ามใส่ข้อมูลสุขภาพ/การวินิจฉัย</div></div>';
+  MEET.msg = '';
+  if ($('mmClose')) $('mmClose').onclick = openClose;
+  $('mmNote').onclick = openMeetNote; $('mmPdf').onclick = openSummary;
+  if ($('mmRound')) $('mmRound').onchange = function(){ loadMeeting(this.value); };
+  [].forEach.call(el.querySelectorAll('[data-mf]'), function(b){ b.onclick = function(){ MEET.f = b.dataset.mf; [].forEach.call(el.querySelectorAll('[data-mf]'), function(x){ x.setAttribute('aria-pressed', String(x === b)); }); mmRows(); }; });
+  $('mmQ').oninput = function(){ MEET.q = this.value; mmRows(); };
+  mmProg(); mmRows();
+}
+function mmRow(k){ return MEET.d.rows.filter(function(r){ return r.rr_id === k; })[0]; }
+function mmPill(n, c){ return n ? '<span class="mm-n" style="background:'+c+'">'+n+'</span>' : '<span class="mm-n z">0</span>'; }
+function mmBar(r){ var ok = Math.max(r.n_records - r.n_star - r.n_follow - r.n_watch - r.n_fail, 0), t = r.n_records || 1, s = function(n, c){ return n ? '<i style="width:'+(n/t*100)+'%;background:'+c+'"></i>' : ''; };
+  return r.n_records ? '<div class="pbar">'+s(r.n_star,'var(--s0)')+s(ok,'var(--s1)')+s(r.n_follow,'var(--s2)')+s(r.n_watch,'var(--s3)')+s(r.n_fail,'var(--s4)')+'</div>' : ''; }
+function mmEsc(r){ var e = r.esc || {};
+  if (e.hit) return '<div class="mm-esc">'+esc(e.text)+'</div><label class="ck"><input type="checkbox" class="hdk"> จัดการแล้ว</label>';
+  if (e.handledAt) return '<label class="ck on"><input type="checkbox" class="hdk" checked> จัดการแล้ว · นับใหม่ตั้งแต่ '+thd(e.handledAt)+'</label>';
+  return ''; }
+function mmSt(r){ var t = String(r.reviewed_at||'').slice(11,16);
+  return String(r.decision||'').trim() ? '<span class="mm-ok">✓ บันทึกมติแล้ว'+(t?' '+t:'')+'</span>' : r.reviewer ? '<span class="hint">ยังไม่มีมติ (กรอกบางช่องแล้ว)</span>' : '<span class="hint">ยังไม่มีมติ</span>'; }
+function mmRows(){
+  var d = MEET.d, closed = d.round.status === 'ปิดรอบ', q = MEET.q.trim().toLowerCase(), dis = closed ? ' disabled' : '';
+  var rows = d.rows.filter(function(r){ return (MEET.f === 'ทุกคน' || r.priority === MEET.f) && (!q || r.id.toLowerCase().indexOf(q) >= 0 || r.name.toLowerCase().indexOf(q) >= 0); });
+  var inp = function(r, f, ph, cls){ return '<input data-f="'+f+'" class="'+(cls||'')+'" maxlength="2000" value="'+esc(r[f])+'" placeholder="'+ph+'"'+dis+'>'; };
+  $('mmRows').innerHTML = rows.length ? rows.map(function(r){
+    var on = folOn(r);
+    return '<tr data-k="'+esc(r.rr_id)+'" class="'+(String(r.decision||'').trim()?'mm-done':'')+'">'+
+      '<td><a class="lnk" data-open="'+esc(r.id)+'"><b>'+esc(r.name)+'</b></a><div class="hint">'+esc(r.id)+(r.group?' · กลุ่ม '+esc(r.group):'')+(MEET.f==='ทุกคน'?' · '+esc(r.priority):'')+'</div><div class="escc">'+mmEsc(r)+'</div></td>'+
+      '<td><div class="mm-pills" title="ติดตาม · เฝ้าระวัง · ไม่จบรายวิชา">'+mmPill(r.n_follow,'var(--s2)')+mmPill(r.n_watch,'var(--s3)')+mmPill(r.n_fail,'var(--s4)')+'</div>'+mmBar(r)+
+        '<div class="hint">'+r.n_records+' บันทึก'+(r.vs_prev?' · '+esc(r.vs_prev):'')+(r.concern_depts?'<br>'+esc(r.concern_depts):'')+(r.teacher_actions?'<br>'+esc(r.teacher_actions):'')+'</div>'+
+        (r.comments?'<details class="cm"><summary>ความเห็นอาจารย์</summary><div>'+esc(r.comments)+'</div></details>':'')+'</td>'+
+      '<td class="hint">'+(r.prev_decision||r.prev_plan?(r.prev_decision?'<b>'+esc(r.prev_decision)+'</b><br>':'')+esc(r.prev_plan):'—')+'</td>'+
+      '<td>'+inp(r,'progress','พัฒนาการ')+inp(r,'prev_outcome','ผลของแผนรอบก่อน','gap')+'</td>'+
+      '<td>'+inp(r,'decision','มติ')+'<textarea data-f="plan" maxlength="2000" placeholder="แผน (ห้ามใส่ข้อมูลสุขภาพ)"'+dis+'>'+esc(r.plan)+'</textarea></td>'+
+      '<td>'+inp(r,'plan_owner','ผู้รับผิดชอบ')+'<input type="date" data-f="next_check" class="gap" value="'+esc(r.next_check)+'" aria-label="วันติดตามผล"'+dis+'></td>'+
+      '<td><div class="stc">'+mmSt(r)+'</div><label class="ck'+(on?' on':'')+'"><input type="checkbox" class="fnk"'+(on?' checked':'')+dis+'> ติดตามต่อรอบหน้า</label>'+
+        '<textarea data-f="follow_topic" rows="2" class="ftp'+(on?'':' hidden')+'" maxlength="2000" placeholder="ติดตามเรื่องอะไร (ไม่บังคับ)"'+dis+'>'+esc(r.follow_topic)+'</textarea></td></tr>'; }).join('')
+    : '<tr><td colspan="7" class="empty">ไม่มีนักเรียนในกลุ่มนี้</td></tr>';
+  [].forEach.call(document.querySelectorAll('#mmRows tr[data-k]'), function(tr){
+    var k = tr.dataset.k;
+    tr.addEventListener('focusin', function(){ [].forEach.call(document.querySelectorAll('#mmRows tr.mm-cur'), function(x){ if (x !== tr) x.classList.remove('mm-cur'); }); tr.classList.add('mm-cur'); });
+    [].forEach.call(tr.querySelectorAll('[data-f]'), function(x){ x.onchange = function(){ var f = {}; f[x.dataset.f] = x.value.trim(); mmSave(k, f, x); }; });
+    var fn = tr.querySelector('.fnk'); fn.onchange = function(){ tr.querySelector('.ftp').classList.toggle('hidden', !fn.checked); if (fn.checked) tr.querySelector('.ftp').focus(); mmSave(k, { follow_next: fn.checked ? 'ใช่' : 'ไม่ใช่' }, fn); };
+    bindHdk(tr, k);
+  });
+  [].forEach.call(document.querySelectorAll('#mmRows [data-open]'), function(a){ a.onclick = function(){ showView('person'); openStudent(a.dataset.open); }; });
+}
+function bindHdk(tr, k){
+  var hk = tr.querySelector('.hdk'); if (!hk) return;
+  hk.onchange = function(){ var r = mmRow(k), v = hk.checked; hk.disabled = true;
+    setHandled(r.id, v, MEET.d.round.id).then(function(e){ r.esc = e; tr.querySelector('.escc').innerHTML = mmEsc(r); bindHdk(tr, k); })
+      .catch(function(){ hk.checked = !v; hk.disabled = false; }); };
+}
+function mmPaint(k, el){
+  var r = mmRow(k), tr = document.querySelector('#mmRows tr[data-k="'+k+'"]'); if (!tr) return;
+  tr.classList.toggle('mm-done', !!String(r.decision||'').trim()); tr.querySelector('.stc').innerHTML = mmSt(r);
+  var fn = tr.querySelector('.fnk'), on = folOn(r); fn.checked = on; fn.parentNode.classList.toggle('on', on); tr.querySelector('.ftp').classList.toggle('hidden', !on);
+  if (el && el.classList){ el.classList.add('saved'); setTimeout(function(){ el.classList.remove('saved'); }, 1500); }
+  mmProg();
+}
+/* บันทึกทีละช่อง ต่อคิวรายแถว (ไม่ชนกันเมื่อแก้หลายช่องเร็ว ๆ) */
+function mmSave(k, fields, el, reason){
+  var r = mmRow(k), tr = document.querySelector('#mmRows tr[data-k="'+k+'"]');
+  if (tr) tr.querySelector('.stc').innerHTML = '<span class="mm-busy">● กำลังบันทึก...</span>';
+  var run = function(){
+    var olds = {}; Object.keys(fields).forEach(function(f){ olds[f] = r[f] == null ? '' : String(r[f]); });
+    return api('adm_review_set', { rrId:k, fields:fields, olds:olds, reason:reason||'', reqId: rid() }).then(function(res){ Object.keys(res.row).forEach(function(x){ if (x !== 'esc') r[x] = res.row[x]; }); mmPaint(k, el); })
+      .catch(function(err){
+        var back = function(){ Object.keys(fields).forEach(function(f){ if (el && f !== 'follow_next') el.value = r[f] || ''; }); mmPaint(k); };
+        if (relogin(err, function(){ mmSave(k, fields, el, reason); })) { back(); return; }
+        if (err.code === 'CONFLICT'){ toast(err.message); loadMeeting(MEET.d.round.id); return; }
+        if (/เหตุผล/.test(err.message)){ askReason(k, fields, el, back); return; }
+        back(); if (tr) tr.querySelector('.stc').innerHTML = '<span class="mm-bad">ยังไม่ได้บันทึก: '+esc(err.message)+'</span>';
+      });
+  };
+  MEET.qs[k] = (MEET.qs[k] || Promise.resolve()).then(run, run);
+}
+function askReason(k, fields, el, back){
+  var r = mmRow(k), f = Object.keys(fields)[0], lab = { follow_topic:'เรื่องที่ติดตามต่อ', progress:'พัฒนาการ', prev_outcome:'ผลของแผนรอบก่อน', decision:'มติ', plan:'แผน', plan_owner:'ผู้รับผิดชอบ', next_check:'วันติดตามผล' }[f] || f, done = false;
+  dlg2('ระบุเหตุผลการแก้ไข', '<div class="ctx"><b>'+esc(r.name)+'</b> ('+esc(r.id)+')<br>แก้ช่อง "'+lab+'" ที่บันทึกไว้แล้ว'+(r.reviewer?' โดย '+esc(r.reviewer)+' '+thd(r.reviewed_at):'')+
+    '<br><span class="hint">เดิม: '+esc(r[f]||'—')+'<br>ใหม่: '+esc(fields[f]||'—')+'</span></div>'+fld('d2Text','เหตุผล','<textarea id="d2Text" maxlength="500" placeholder="เช่น ที่ประชุมแก้มติ"></textarea>'), 'บันทึก', function(){
+      var t = $('d2Text').value.trim(); if (t.length < 3) return Promise.reject(new Error('กรุณาระบุเหตุผล'));
+      done = true; mmSave(k, fields, el, t); return Promise.resolve(); });
+  $('dlg2').addEventListener('close', function h(){ $('dlg2').removeEventListener('close', h); if (!done) back(); });
+}
+
+/* ---------- เตรียมข้อมูลรอบ / ปิดรอบ ---------- */
+var PREP = null;
+$('cPrep').onclick = openPrep;
+function openPrep(){
+  var y0 = $('cYear').value || '5';
+  PREP = { ex:null };
+  dlg2('เตรียมข้อมูลรอบทบทวน',
+    '<div class="grid2">'+fld('pYear','ชั้นปี','<select id="pYear">'+(INIT.years||['1','2','3','4','5','6']).map(function(y){ return '<option value="'+esc(y)+'"'+(y===y0?' selected':'')+'>ปี '+esc(y)+'</option>'; }).join('')+'</select>')+
+      fld('pRound','รอบที่ (ใช้ตรวจก่อนเลื่อนชั้นปลายปี)','<select id="pRound"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4 (ปลายปี)</option></select>')+
+      fld('pStart','ใช้ผลประเมินตั้งแต่','<input type="date" id="pStart">')+fld('pEnd','ถึง','<input type="date" id="pEnd">')+'</div>'+
+    fld('pMeet','วันประชุม','<input type="date" id="pMeet">')+'<div id="pInfo" class="hint" style="margin-bottom:10px"></div>'+
+    '<div class="idbox"><div class="hint">รหัสรอบ</div><div class="code" id="pId">—</div><div class="hint">ปีการศึกษา-เดือน-วันประชุม-ชั้นปี · ถ้าเปลี่ยนวันประชุมภายหลัง รหัสจะเปลี่ยนตามวันจริง (ข้อมูลที่กรอกไว้ไม่หาย)</div></div>',
+    'เตรียมข้อมูลรอบ', prepSave);
+  $('d2Save').disabled = true;
+  ['pYear','pRound'].forEach(function(i){ $(i).onchange = prepDefault; });
+  ['pEnd','pMeet'].forEach(function(i){ $(i).oninput = prepId; $(i).onchange = prepId; });
+  api('adm_rounds').then(function(d){
+    var ay = acadYear(d.today), mine = d.rounds.filter(function(r){ return r.year === $('pYear').value && r.ay === ay; });
+    var open = mine.filter(function(r){ return r.status !== 'ปิดรอบ'; })[0], mx = mine.reduce(function(m, r){ return Math.max(m, +r.rn || 0); }, 0);
+    $('pRound').value = String(open ? open.rn : Math.min(mx + 1, 4)); prepDefault();
+  }).catch(function(e){ if ($('d2Msg')) $('d2Msg').textContent = e.message; });
+}
+function prepDefault(){
+  $('d2Save').disabled = true; $('pInfo').textContent = 'กำลังโหลดค่าเริ่มต้น...';
+  api('adm_round_default', { year: $('pYear').value, round: $('pRound').value }).then(function(d){
+    PREP.ex = d.existing; $('pStart').value = d.start; $('pEnd').value = d.end; $('pMeet').value = d.existing ? d.existing.meeting : '';
+    $('pInfo').innerHTML = d.existing ? (d.existing.status === 'ปิดรอบ' ? '<span class="msg err">รอบนี้ปิดแล้ว เตรียมข้อมูลใหม่ไม่ได้</span>'
+      : 'รอบนี้เตรียมไว้แล้ว (ข้อมูล '+thd(d.existing.start)+' – '+thd(d.existing.end)+') · กดอีกครั้ง = อัปเดตตัวเลขถึงวันที่เลือก ค่าที่ที่ประชุมกรอกไว้ไม่หาย')
+      : 'ช่วงข้อมูลเริ่มต่อจากรอบก่อนของชั้นปีนี้ให้อัตโนมัติ แก้ได้';
+    $('d2Save').disabled = !!(d.existing && d.existing.status === 'ปิดรอบ'); prepId();
+  }).catch(function(e){ if (relogin(e, prepDefault)) return; $('pInfo').textContent = e.message; });
+}
+function prepId(){
+  var m = $('pMeet').value, e = $('pEnd').value, y = $('pYear').value;
+  var ok = /^\d{4}-\d{2}-\d{2}$/.test(m) && e, nid = ok ? acadYear(e)+'-'+MON_EN[+m.slice(5,7)-1]+'-'+m.slice(8,10)+'-Y'+y : '';
+  if (PREP.ex && (PREP.ex.status === 'ปิดรอบ' || !ok || PREP.ex.id.indexOf(nid) === 0)) { $('pId').textContent = PREP.ex.id; return; }
+  $('pId').textContent = nid ? nid + (PREP.ex ? '  (เดิม '+PREP.ex.id+')' : '') : '— ใส่วันประชุม —';
+}
+function prepSave(){
+  var q = { year:$('pYear').value, round:$('pRound').value, start:$('pStart').value, end:$('pEnd').value, meeting:$('pMeet').value, reqId: rid() };
+  if (!q.start || !q.end) return Promise.reject(new Error('กรุณาระบุช่วงข้อมูล'));
+  if (q.start > q.end) return Promise.reject(new Error('วันเริ่มต้องไม่หลังวันสิ้นสุด'));
+  if (!q.meeting && !PREP.ex) return Promise.reject(new Error('กรุณาระบุวันประชุม (ใช้สร้างรหัสรอบ)'));
+  $('d2Save').textContent = 'กำลังเตรียมข้อมูล...';
+  return api('adm_round_prepare', q).then(function(r){
+    toast('เตรียมข้อมูลรอบ '+r.id+' แล้ว'); MEET.msg = r.message; LOADED.cohort = false;
+    if ($('cYear').querySelector('option[value="'+q.year+'"]')) $('cYear').value = q.year;
+    MEET.on = true; MEET.f = 'ต้องพิจารณา'; setMeetUI(); loadMeeting(r.id);
+  }).catch(function(e){ $('d2Save').textContent = 'เตรียมข้อมูลรอบ'; throw e; });
+}
+function openClose(){
+  var r = MEET.d.round, rows = MEET.d.rows, pri = rows.filter(function(x){ return x.priority === 'ต้องพิจารณา'; });
+  var miss = pri.filter(function(x){ return !String(x.decision||'').trim(); }).length, dec = rows.filter(function(x){ return String(x.decision||'').trim(); }).length;
+  dlg2('ปิดรอบ '+r.id,
+    '<div class="ctx">รอบที่ '+esc(r.rn||r.round)+' · ชั้นปี '+esc(r.year)+' · ประชุม '+(r.meeting?thd(r.meeting):'—')+'<br>มีมติแล้ว '+dec+'/'+rows.length+' คน</div>'+
+    (miss?'<div class="warnbox">ยังมี <b>'+miss+'</b> คนในกลุ่ม "ต้องพิจารณา" ที่ยังไม่มีมติ</div>':'<div class="msg ok" style="margin:0 0 12px">ทุกคนในกลุ่ม "ต้องพิจารณา" มีมติแล้ว</div>')+
+    '<p class="hint" style="margin-top:0">เมื่อปิดรอบ: ข้อกังวลในช่วงนี้ของนักเรียนที่มีมติแล้ว จะเปลี่ยนเป็น "ทบทวนแล้ว" และรอบนี้จะแก้ไขไม่ได้อีก 🔒 (เปิดกลับจากหน้าเว็บไม่ได้)</p>'+
+    fld('d2Text','พิมพ์รหัสรอบเพื่อยืนยัน','<input id="d2Text" autocomplete="off" placeholder="'+esc(r.id)+'">'), 'ปิดรอบ', function(){
+      var t = $('d2Text').value.trim(); if (t !== r.id) return Promise.reject(new Error('พิมพ์รหัสรอบให้ตรง: '+r.id));
+      return api('adm_round_close', { id:r.id, confirm:t, reqId: rid() }).then(function(x){ toast(x.message); LOADED.cohort = false; loadMeeting(r.id); }); });
+  $('d2Save').className = 'danger';
+}
+/* ---------- ข้อสรุปที่ประชุม + สรุปผลการประชุมเป็น PDF ---------- */
+function openMeetNote(){
+  var r = MEET.d.round;
+  dlg2('ข้อสรุปของที่ประชุม · '+r.id, '<div class="ctx">รอบที่ '+esc(r.rn||r.round)+' · ประชุม '+(r.meeting?thd(r.meeting):'—')+'<br><span class="hint">ข้อความนี้จะอยู่ในสรุป PDF และแสดงเป็น "ข้อแนะนำจากการประชุมครั้งก่อน" ในรอบถัดไป</span></div>'+
+    fld('d2Text','ข้อสรุป / ข้อแนะนำของที่ประชุม (ห้ามใส่ข้อมูลสุขภาพ/การวินิจฉัย)','<textarea id="d2Text" maxlength="2000" style="min-height:160px">'+esc(r.conclusion||'')+'</textarea>'), 'บันทึก', function(){
+    return api('adm_round_note', { round:r.id, text:$('d2Text').value, reqId: rid() }).then(function(x){ r.conclusion = x.conclusion; LOADED.cohort = false; toast(x.message); renderMeeting(); }); });
+}
+function openSummary(){
+  var r = MEET.d.round;
+  dlg2('สรุปผลการประชุม (PDF) · '+r.id,
+    '<div class="fld"><label>นักเรียนที่จะใส่ในสรุป</label>'+
+      [['dec','เฉพาะคนที่มีมติแล้ว'],['pri','กลุ่ม "ต้องพิจารณา" ทั้งหมด + คนอื่นที่มีมติ'],['all','ทุกคนในชั้นปี']].map(function(o,i){
+        return '<label class="ck" style="font-size:14px"><input type="radio" name="sScope" value="'+o[0]+'"'+(i===1?' checked':'')+'> '+o[1]+'</label>'; }).join('')+'</div>'+
+    '<label class="ck" style="font-size:14px"><input type="checkbox" id="sCm"> ใส่ความเห็นอาจารย์ในช่วงนี้ด้วย <span class="hint">(ยาว · ใช้เมื่อจำเป็น)</span></label>'+
+    '<label class="ck" style="font-size:14px"><input type="checkbox" id="sSign" checked> ใส่ช่องลงชื่อผู้บันทึก/ประธาน</label>'+
+    '<p class="hint" style="margin:12px 0 0">กด "สร้าง PDF" แล้วเลือก <b>บันทึกเป็น PDF</b> (Save as PDF) ในหน้าต่างพิมพ์ · เอกสารนี้มีชื่อนักเรียน ใช้ภายในเท่านั้น</p>',
+    'สร้าง PDF', function(){
+      var sc = (document.querySelector('input[name=sScope]:checked')||{}).value || 'pri';
+      buildSummary(sc, $('sCm').checked, $('sSign').checked);
+      setTimeout(printSummary, 50); return Promise.resolve(); });
+}
+var PRI_ORDER = ['ต้องพิจารณา','ดูประกอบ','โดดเด่น','ไม่มีข้อกังวล'];
+function buildSummary(scope, withCm, withSign){
+  var d = MEET.d, r = d.round, has = function(x){ return !!String(x.decision||'').trim(); };
+  var rows = d.rows.filter(function(x){ return scope === 'all' || has(x) || (scope === 'pri' && x.priority === 'ต้องพิจารณา'); });
+  var pri = d.rows.filter(function(x){ return x.priority === 'ต้องพิจารณา'; }), dp = pri.filter(has).length;
+  var fol = d.rows.filter(function(x){ return x.follow_next === 'ใช่'; }), hit = d.rows.filter(function(x){ return x.esc && x.esc.hit; });
+  var cnt = {}; d.rows.forEach(function(x){ cnt[x.priority] = (cnt[x.priority]||0) + 1; });
+  var kv = function(k, v){ return v ? '<tr><th>'+k+'</th><td>'+v+'</td></tr>' : ''; };
+  var stu = function(x){
+    var e = x.esc || {}, conc = [x.n_follow?'ติดตาม '+x.n_follow:'', x.n_watch?'เฝ้าระวัง '+x.n_watch:'', x.n_fail?'ไม่จบรายวิชา '+x.n_fail:''].filter(Boolean).join(' · ');
+    return '<div class="ps-stu"><div class="ps-h"><b>'+esc(x.name)+'</b> <span>'+esc(x.id)+(x.group?' · กลุ่ม '+esc(x.group):'')+' · '+esc(x.priority)+'</span></div><table class="ps-kv">'+
+      kv('ข้อกังวลรอบนี้', (conc||'ไม่มี')+' จาก '+x.n_records+' บันทึก'+(x.vs_prev?' · '+esc(x.vs_prev):'')+(x.concern_depts?'<br>ภาควิชา: '+esc(x.concern_depts):'')+(x.teacher_actions?'<br>อาจารย์: '+esc(x.teacher_actions):''))+
+      kv('มติ/แผนรอบก่อน', esc([x.prev_decision, x.prev_plan].filter(Boolean).join(' — ')))+
+      kv('พัฒนาการ', esc(x.progress))+kv('ผลของแผนรอบก่อน', esc(x.prev_outcome))+
+      kv('<b>มติ</b>', has(x) ? '<b>'+esc(x.decision)+'</b>' : '<span class="ps-miss">ยังไม่มีมติ</span>')+kv('แผน', esc(x.plan))+
+      kv('ผู้รับผิดชอบ / วันติดตามผล', esc(x.plan_owner)+(x.plan_owner&&x.next_check?' · ':'')+(x.next_check?thd(x.next_check):''))+
+      kv('ติดตามต่อรอบหน้า', x.follow_next==='ใช่' ? 'ใช่'+(x.follow_topic?' — '+esc(x.follow_topic):'') : x.follow_next==='ไม่ใช่' ? 'ไม่ (จบเรื่อง)' : '')+
+      kv('เกณฑ์แจ้งกรรมการ', e.hit ? '<b>'+esc(e.text)+'</b>' : e.handledAt ? 'จัดการแล้ว เมื่อ '+thd(e.handledAt)+' (เริ่มนับใหม่)' : '')+
+      (withCm && x.comments ? kv('ความเห็นอาจารย์', '<div class="ps-cm">'+esc(x.comments)+'</div>') : '')+
+      '</table></div>'; };
+  var groups = PRI_ORDER.map(function(p){ var g = rows.filter(function(x){ return x.priority === p; }); return g.length ? '<h2>'+p+' ('+g.length+' คน)</h2>'+g.map(stu).join('') : ''; }).join('');
+  $('printArea').innerHTML = '<div class="ps">'+
+    '<div class="ps-top"><div class="ps-t">สรุปผลการประชุมทบทวนนักเรียน ชั้นปีที่ '+esc(r.year)+'</div>'+
+      '<div>รหัสรอบ <b>'+esc(r.id)+'</b> · รอบที่ '+esc(r.rn||r.round)+' · ปีการศึกษา '+esc(r.ay)+'</div>'+
+      '<div>วันประชุม '+(r.meeting?thd(r.meeting):'—')+' · ใช้ผลประเมิน '+thd(r.start)+' – '+thd(r.end)+' · สถานะรอบ: '+esc(r.status)+'</div>'+
+      (r.attendees?'<div>ผู้เข้าประชุม: '+esc(r.attendees)+'</div>':'')+'</div>'+
+    '<table class="ps-sum"><tr><td><b>'+d.rows.length+'</b><br>นักเรียน</td><td><b>'+(cnt['ต้องพิจารณา']||0)+'</b><br>ต้องพิจารณา</td><td><b>'+dp+'/'+pri.length+'</b><br>มีมติแล้ว (ต้องพิจารณา)</td><td><b>'+fol.length+'</b><br>ติดตามต่อรอบหน้า</td><td><b>'+hit.length+'</b><br>ถึงเกณฑ์แจ้งกรรมการ</td></tr></table>'+
+    '<h2>ข้อสรุป / ข้อแนะนำของที่ประชุม</h2><div class="ps-box">'+(r.conclusion?esc(r.conclusion):'<span class="ps-miss">ยังไม่ได้บันทึกข้อสรุป</span>')+'</div>'+
+    (fol.length ? '<h2>สิ่งที่ต้องดำเนินการ / ติดตามต่อ</h2><table class="ps-tbl"><thead><tr><th>นักเรียน</th><th>เรื่องที่ติดตาม / มติ</th><th>ผู้รับผิดชอบ</th><th>วันติดตามผล</th></tr></thead><tbody>'+
+      fol.map(function(x){ return '<tr><td>'+esc(x.name)+'<br><span>'+esc(x.id)+'</span></td><td>'+(x.follow_topic?'<b>'+esc(x.follow_topic)+'</b><br>':'')+esc(x.decision)+'</td><td>'+esc(x.plan_owner||'—')+'</td><td>'+(x.next_check?thd(x.next_check):'—')+'</td></tr>'; }).join('')+'</tbody></table>' : '')+
+    '<h2 class="ps-break">รายละเอียดรายคน</h2>'+(groups||'<p>ไม่มีนักเรียนตามเงื่อนไขที่เลือก</p>')+
+    (withSign ? '<div class="ps-sign"><div>ลงชื่อ ....................................... ผู้บันทึก<br>(.......................................)</div><div>ลงชื่อ ....................................... ประธานที่ประชุม<br>(.......................................)</div></div>' : '')+
+    '<div class="ps-foot">เอกสารภายใน ใช้เพื่อการดูแลนักเรียน ห้ามเผยแพร่ · ไม่มีข้อมูลสุขภาพ/การวินิจฉัย · พิมพ์จากระบบเมื่อ '+thd(new Date().toISOString().slice(0,10))+' โดย '+esc(INIT.email)+'</div></div>';
+}
+function printSummary(){
+  var t = document.title; document.title = 'สรุปผลประชุม_'+MEET.d.round.id;
+  document.body.classList.add('printing');
+  var done = function(){ document.title = t; document.body.classList.remove('printing'); window.removeEventListener('afterprint', done); };
+  window.addEventListener('afterprint', done); window.print(); setTimeout(done, 60000);
+}
 /* หน้าต่างความเห็น / ข้อสรุปที่ประชุม */
 var D2 = null;
 function dlg2(title, body, saveLabel, onSave){
   $('d2Title').textContent = title; $('d2Body').innerHTML = body + '<div class="msg err" id="d2Msg" role="alert"></div>';
-  $('d2Save').textContent = saveLabel; $('d2Save').disabled = false; D2 = { save:onSave, busy:false }; $('dlg2').showModal();
+  $('d2Save').textContent = saveLabel; $('d2Save').disabled = false; $('d2Save').className = 'pri'; D2 = { save:onSave, busy:false }; $('dlg2').showModal();
 }
 $('d2Cancel').onclick = function(){ if (!D2 || !D2.busy) $('dlg2').close(); };
 $('dlg2').addEventListener('cancel', function(e){ if (D2 && D2.busy) e.preventDefault(); });
