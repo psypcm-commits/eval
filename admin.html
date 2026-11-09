@@ -147,6 +147,7 @@ i.sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:
 .sg .sl{font-size:12px;line-height:20px;padding:0 4px;border-radius:4px;background:var(--soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sg.fut .sb{background:none;border:1px dashed var(--faint)}.sg.fut .sl{background:none;border:1px dashed var(--faint);color:var(--faint)}
 .sg.now .sb{outline:2px solid var(--brand2);outline-offset:1px}
+.delbox{margin-top:14px}.delbox summary{cursor:pointer;color:var(--muted);font-size:13px;padding:6px 0}
 .mm-fu{margin-top:6px;padding:4px 6px;border-radius:6px;background:var(--soft);color:var(--ink);font-size:12px;white-space:pre-wrap}
 .sg.emp .sb,.pseg.emp .pst,.legend i.emp{background:repeating-linear-gradient(45deg,var(--card),var(--card) 5px,var(--line) 5px,var(--line) 7px);box-shadow:inset 0 0 0 1px var(--line)}
 .rbody{position:relative}.tline{position:absolute;top:0;bottom:0;left:106px;right:0;pointer-events:none}.today{position:absolute;top:0;bottom:0;width:2px;background:var(--brand2)}
@@ -567,8 +568,8 @@ function renderFU(el){
   el.innerHTML = '<div class="filters">'+add+'</div><div class="tablewrap"><table><thead><tr><th>วันที่</th><th>ประเภท</th><th>ประเด็น / สิ่งที่ทำ</th><th>ข้อตกลง</th><th>การยอมรับ</th><th>วันนัดดูผล / ผล</th><th>ผู้ดำเนินการ</th><th></th></tr></thead><tbody>'+
     rows.map(function(f){ var res = f.result ? esc(f.result)+(f.due?'<div class="hint">นัด '+thd(f.due)+'</div>':'') : (f.due ? 'นัด '+thd(f.due)+'<div class="hint">ยังไม่บันทึกผล</div>' : '<span class="hint">—</span>');
       return '<tr><td>'+thd(f.date)+'</td><td>'+dash(f.kind)+'</td><td class="cmt">'+dash(f.issue)+'</td><td class="cmt">'+dash(f.commitment)+'</td><td>'+dash(f.consent)+'</td><td>'+res+'</td><td><span class="hint">'+esc(f.actor||f.recorder)+'</span></td>'+
-        '<td><button class="sm" data-edit="fu" data-k="'+esc(f.fu_id)+'">แก้ไข</button></td></tr>'; }).join('')+
-    '</tbody></table></div><div class="note">บันทึกล่าสุดจะแสดงในโหมดประชุมรอบถัดไป (ช่อง "การดำเนินการล่าสุด") · ห้ามใส่ข้อมูลสุขภาพ/การรักษา ให้บันทึกในส่วน 🔒 ข้อมูลลับ</div>';
+        '<td><button class="sm" data-edit="fu" data-k="'+esc(f.fu_id)+'">แก้ไข</button> <button class="sm" data-del="fu" data-k="'+esc(f.fu_id)+'">ลบ</button></td></tr>'; }).join('')+
+    '</tbody></table></div><div class="note">บันทึกล่าสุดแสดงในโหมดประชุม (กล่อง 📌 บันทึกติดตามล่าสุด) · ห้ามใส่ข้อมูลสุขภาพ/การรักษา ให้บันทึกในส่วน 🔒 ข้อมูลลับ</div>';
   bindEdits(el);
 }
 function renderAF(el){
@@ -577,7 +578,7 @@ function renderAF(el){
   var rows = B.affective.slice().sort(function(a,b){ return a.acad_year < b.acad_year ? 1 : -1; });
   el.innerHTML = '<div class="filters">'+add+'</div>'+(rows.length ? '<div class="tablewrap"><table><thead><tr><th>ปีการศึกษา</th><th>ชั้นปี</th><th class="num">คะแนน (เต็ม 100)</th><th>ผู้ให้คะแนน</th><th>หมายเหตุ</th><th>บันทึกโดย</th><th></th></tr></thead><tbody>'+
     rows.map(function(a){ return '<tr><td>'+esc(a.acad_year)+'</td><td>'+dash(a.year_level)+'</td><td class="num">'+(a.score===''?'<span class="hint">ยังไม่กรอก</span>':esc(a.score))+'</td><td>'+dash(a.grader)+'</td><td class="cmt">'+dash(a.note)+'</td><td><span class="hint">'+esc(a.recorder)+(a.recorded_at?'<br>'+thd(a.recorded_at):'')+'</span></td>'+
-      '<td><button class="sm" data-edit="af" data-k="'+esc(a.key)+'">แก้ไข</button></td></tr>'; }).join('')+'</tbody></table></div>' : '<div class="panel empty">ไม่มีข้อมูลคะแนนจิตพิสัย</div>');
+      '<td><button class="sm" data-edit="af" data-k="'+esc(a.key)+'">แก้ไข</button> <button class="sm" data-del="af" data-k="'+esc(a.key)+'">ลบ</button></td></tr>'; }).join('')+'</tbody></table></div>' : '<div class="panel empty">ไม่มีข้อมูลคะแนนจิตพิสัย</div>');
   bindEdits(el);
 }
 function renderGR(el){
@@ -587,7 +588,7 @@ function renderGR(el){
   el.innerHTML = '<div class="filters">'+add+'</div>'+(rows.length ? '<div class="tablewrap"><table><thead><tr><th>ปี/ภาค</th><th>วิชา / rotation</th><th>ภาควิชา · ช่วง rotation</th><th class="num">หน่วยกิต</th><th>เกรด</th><th class="num">คะแนน</th><th>ที่มา</th><th></th></tr></thead><tbody>'+
     rows.map(function(g){ return '<tr><td>'+esc(g.acad_year)+(g.semester?'/'+esc(g.semester):'')+'</td><td>'+esc(g.course_name||g.course_code)+(g.course_code&&g.course_name?'<div class="hint">'+esc(g.course_code)+'</div>':'')+'</td>'+
       '<td>'+(g.department?esc(short(g.department)):'<span class="hint">—</span>')+(g.rot_start?'<div class="hint">'+thd(g.rot_start)+' – '+thd(g.rot_end)+'</div>':'')+'</td><td class="num">'+dash(g.credits)+'</td><td><b>'+dash(g.grade)+'</b></td><td class="num">'+dash(g.score)+'</td>'+
-      '<td><span class="hint">'+esc(g.source||g.recorder)+'</span></td><td><button class="sm" data-edit="gr" data-k="'+esc(g.key)+'">แก้ไข</button></td></tr>'; }).join('')+'</tbody></table></div>' : '<div class="panel empty">ไม่มีข้อมูลผลการเรียน</div>');
+      '<td><span class="hint">'+esc(g.source||g.recorder)+'</span></td><td><button class="sm" data-edit="gr" data-k="'+esc(g.key)+'">แก้ไข</button> <button class="sm" data-del="gr" data-k="'+esc(g.key)+'">ลบ</button></td></tr>'; }).join('')+'</tbody></table></div>' : '<div class="panel empty">ไม่มีข้อมูลผลการเรียน</div>');
   bindEdits(el);
 }
 function renderHist(el){
@@ -599,7 +600,33 @@ function renderHist(el){
 
 /* ---------- ฟอร์มแก้ไข ---------- */
 var FORM = null;
-function bindEdits(el){ [].forEach.call(el.querySelectorAll('[data-edit]'), function(b){ b.onclick = function(){ openForm(b.dataset.edit, b.dataset.k); }; }); }
+function bindEdits(el){ [].forEach.call(el.querySelectorAll('[data-edit]'), function(b){ b.onclick = function(){ openForm(b.dataset.edit, b.dataset.k); }; });
+  var kind = { fu:'fu', af:'af', gr:'gr' }[SUB];
+  if (kind && !el.querySelector('.delbox')) { var dl = (B.deleted||[]).filter(function(x){ return x.kind === kind; });
+    if (dl.length) el.insertAdjacentHTML('beforeend', delBox(dl.map(function(x){ return { k:x.key, at:x.deleted_at, by:x.deleted_by, label:x.label, attr:'data-rest="'+kind+'"' }; }))); }
+  [].forEach.call(el.querySelectorAll('[data-del]'), function(b){ b.onclick = function(){ delRec(b.dataset.del, b.dataset.k); }; });
+  [].forEach.call(el.querySelectorAll('[data-rest]'), function(b){ b.onclick = function(){ restRec(b.dataset.rest, b.dataset.k, b.dataset.at); }; }); }
+function delBox(list){
+  return '<details class="delbox"><summary>รายการที่ลบแล้ว ('+list.length+') · กู้คืนได้</summary><div class="tablewrap"><table><thead><tr><th>รายการ</th><th>ลบเมื่อ</th><th>ผู้ลบ</th><th></th></tr></thead><tbody>'+
+    list.map(function(x){ return '<tr><td class="cmt">'+esc(x.label)+'</td><td>'+esc(x.at)+'</td><td><span class="hint">'+esc(x.by)+'</span></td><td><button class="sm" '+x.attr+' data-k="'+esc(x.k)+'" data-at="'+esc(x.at)+'">กู้คืน</button></td></tr>'; }).join('')+
+    '</tbody></table></div></details>';
+}
+var KNAME = { fu:'บันทึกติดตาม', af:'คะแนนจิตพิสัย', gr:'ผลการเรียน' };
+function recOf(kind, key){ var L = kind === 'fu' ? B.followups : kind === 'af' ? B.affective : B.grades; return (L||[]).filter(function(r){ return (kind === 'fu' ? r.fu_id : r.key) === key; })[0]; }
+function delRec(kind, key){
+  var r = recOf(kind, key), req = rid(); if (!r) return;
+  var lab = kind === 'fu' ? [thd(r.date), r.kind, r.issue].filter(Boolean).join(' · ') : kind === 'af' ? 'ปีการศึกษา '+r.acad_year+' · คะแนน '+r.score : [r.acad_year, r.course_name||r.course_code, r.grade].filter(Boolean).join(' · ');
+  dlg2('ลบ'+KNAME[kind], '<div class="ctx">'+esc(lab)+'</div><p style="margin-top:0">รายการนี้จะหายจากหน้าจอ'+(kind==='fu'?' ที่ประชุม และรายงาน PDF':'')+' แต่<b>กู้คืนได้</b>ที่ "รายการที่ลบแล้ว" ด้านล่างของแท็บนี้ · ระบบเก็บประวัติการลบ</p>'+
+    fld('d2Text','หมายเหตุ (ถ้ามี)','<input id="d2Text" maxlength="300">'), 'ลบ', function(){
+      return api('adm_delete', { kind:kind, key:key, ver:r.ver, studentId:CUR, reason:$('d2Text').value.trim(), reqId:req }).then(function(x){ B = x.bundle; renderPerson(); toast(x.message); })
+        .catch(function(err){ if (err.code === 'CONFLICT'){ openStudent(CUR, true); } throw err; }); });
+  $('d2Save').className = 'danger';
+}
+function restRec(kind, key, at){
+  var req = rid();
+  api('adm_restore', { kind:kind, key:key, deletedAt:at, studentId:CUR, reqId:req }).then(function(x){ B = x.bundle; renderPerson(); toast(x.message); })
+    .catch(function(err){ if (relogin(err, function(){ restRec(kind, key, at); })) return; toast('ยังไม่ได้กู้คืน: '+err.message); if (err.code === 'CONFLICT') openStudent(CUR, true); });
+}
 function opts(list, v, blank){ return (blank?'<option value="">'+blank+'</option>':'') + list.map(function(x){ return '<option'+(x===v?' selected':'')+'>'+esc(x)+'</option>'; }).join(''); }
 function fld(id, label, inner){ return '<div class="fld"><label for="'+id+'">'+label+'</label>'+inner+'</div>'; }
 function openForm(kind, key){
@@ -722,40 +749,63 @@ var PSYTABS = [
 function renderPsyData(el){
   var d = PSY.data;
   el.innerHTML = '<div class="secbar"><span>🔓 ปลดล็อกเฉพาะ '+esc(B.profile.name)+' · <span id="psyLeft"></span></span><button class="sm danger" id="psyLockBtn">ล็อกทันที</button></div>'+
-    PSYTABS.map(function(t){ var rows = d[t[0]] || [], pf = t[0] === 'pf';
+    PSYTABS.map(function(t){ var rows = d[t[0]] || [], pf = t[0] === 'pf' || t[0] === 'tx', idk = t[0] === 'tx' ? 'tx_id' : 'pf_id';
       var body = !d.sources[t[0]] && !pf ? '<div class="nosrc"><b>ยังไม่มีแหล่งข้อมูล</b> — ยังไม่มีแท็บนี้ในไฟล์ข้อมูลลับ</div>' : !rows.length ? '<div class="hint" style="padding:6px 0">ไม่มีข้อมูล</div>' :
         '<div class="tablewrap"><table><thead><tr>'+t[2].map(function(c){ return '<th>'+c[1]+'</th>'; }).join('')+(pf?'<th></th>':'')+'</tr></thead><tbody>'+
         rows.slice().sort(function(a,b){ var k=t[2][0][0]; return a[k] < b[k] ? 1 : -1; }).map(function(r){ return '<tr>'+t[2].map(function(c){ var v = r[c[0]]; return '<td class="cmt">'+(/date/.test(c[0])&&v?thd(v):dash(v))+'</td>'; }).join('')+
-          (pf?'<td><button class="sm" data-pf="'+esc(r.pf_id)+'">แก้ไข</button></td>':'')+'</tr>'; }).join('')+'</tbody></table></div>';
-      return '<div class="panel"><h3>'+t[1]+(pf?' <button class="sm pri" data-pf="" style="margin-left:8px">+ เพิ่ม F/U จิตเวช</button>':'')+'</h3>'+body+'</div>'; }).join('')+
+          (pf?'<td><button class="sm" data-pe="'+t[0]+'" data-k="'+esc(r[idk])+'">แก้ไข</button> <button class="sm" data-pd="'+t[0]+'" data-k="'+esc(r[idk])+'">ลบ</button></td>':'')+'</tr>'; }).join('')+'</tbody></table></div>';
+      var dl = pf ? (d.del||[]).filter(function(x){ return x.tbl === t[0]; }) : [];
+      if (dl.length) body += delBox(dl.map(function(x){ return { k:x.key, at:x.deleted_at, by:x.deleted_by, label:x.label, attr:'data-pr="'+t[0]+'"' }; }));
+      return '<div class="panel"><h3>'+t[1]+(pf?' <button class="sm pri" data-pe="'+t[0]+'" data-k="" style="margin-left:8px">+ เพิ่ม'+(t[0]==='tx'?'การรักษา':' F/U จิตเวช')+'</button>':'')+'</h3>'+body+'</div>'; }).join('')+
     '<div class="note">ข้อมูลส่วนนี้อ่านจากไฟล์ข้อมูลลับโดยตรง ไม่ถูกเก็บในเครื่องหรือ DB_MAIN · การเปิดดูถูกบันทึกในแท็บ _บันทึกการเข้าถึง ของไฟล์จิตเวช · แก้ไขข้อมูลในไฟล์จิตเวชโดยตรง</div>';
   $('psyLockBtn').onclick = function(){ psyLock(); renderSub(); };
-  [].forEach.call(el.querySelectorAll('[data-pf]'), function(b){ b.onclick = function(){ openPf(b.dataset.pf); }; });
+  [].forEach.call(el.querySelectorAll('[data-pe]'), function(b){ b.onclick = function(){ openPsy(b.dataset.pe, b.dataset.k); }; });
+  [].forEach.call(el.querySelectorAll('[data-pd]'), function(b){ b.onclick = function(){ psyDel(b.dataset.pd, b.dataset.k); }; });
+  [].forEach.call(el.querySelectorAll('[data-pr]'), function(b){ b.onclick = function(){ psyCall(b.dataset.pr, { op:'restore', key:b.dataset.k, deletedAt:b.dataset.at }).catch(function(err){ toast('ยังไม่ได้กู้คืน: '+err.message); }); }; });
   tickIdle();
 }
-function openPf(key){
-  var rec = key ? (PSY.data.pf||[]).filter(function(r){ return r.pf_id === key; })[0] : null, sid = PSY.sid, req = rid();
-  var v = function(k){ return rec ? esc(rec[k]) : ''; }, dv = function(k){ return rec ? esc(String(rec[k]||'').slice(0,10)) : ''; };
+var PSYF = {
+  pf: [['date','วันที่','d'],['clinician','ผู้ดูแล','t'],['status','สถานะ (ถ้ามี)','l:pf_status'],['next_date','นัดถัดไป (ถ้ามี)','d'],
+       ['progress','บันทึกความคืบหน้า','a','เช่น คุยผู้ปกครองแล้ว ให้ยา ดูตั้งใจ ติดตาม'],['note','ข้อมูลที่อาจารย์ที่เกี่ยวข้องต้องทราบ (ถ้ามี · ไม่ระบุการวินิจฉัย)','t']],
+  tx: [['start_date','วันที่เริ่มรักษา','d'],['tx_type','ประเภทการรักษา','l:tx_type'],['diagnosis','การวินิจฉัย (ICD-10 / ข้อความ)','t'],['status','สถานะ','l:tx_status'],
+       ['medication','ยาและขนาด','a'],['clinician','แพทย์ผู้รักษา','t'],['place','สถานที่รักษา','t'],['next_date','นัดถัดไป','d'],['end_date','วันที่สิ้นสุด','d'],['note','หมายเหตุ','a']]
+};
+var PSYNAME = { pf:'F/U จิตเวช', tx:'การรักษาทางจิตเวช' };
+function psyRec(tbl, key){ return key ? (PSY.data[tbl]||[]).filter(function(r){ return r[tbl==='tx'?'tx_id':'pf_id'] === key; })[0] : null; }
+function psyCall(tbl, body){
+  var sid = PSY.sid; if (!PSY.token) return Promise.reject(new Error('ส่วนข้อมูลลับล็อกแล้ว กรุณาใส่ PIN ใหม่'));
   PSY.last = Date.now();
-  dlg2((rec?'แก้ไข':'เพิ่ม')+' F/U จิตเวช · '+B.profile.name,
-    '<div class="ctx">🔒 บันทึกลงไฟล์ข้อมูลลับเท่านั้น ไม่ผ่าน DB_MAIN · การเพิ่ม/แก้ไขถูกจดใน _บันทึกการเข้าถึง</div>'+
-    '<div class="grid2">'+fld('p_date','วันที่','<input type="date" id="p_date" value="'+(rec?dv('date'):INIT.today)+'">')+
-    fld('p_clinician','ผู้ดูแล','<input id="p_clinician" maxlength="200" value="'+v('clinician')+'">')+
-    fld('p_status','สถานะ (ถ้ามี)','<select id="p_status">'+opts(INIT.choices.pf_status||[], rec?rec.status:'', '—')+'</select>')+
-    fld('p_next','นัดถัดไป (ถ้ามี)','<input type="date" id="p_next" value="'+dv('next_date')+'">')+'</div>'+
-    fld('p_progress','บันทึกความคืบหน้า','<textarea id="p_progress" maxlength="4000" rows="4" placeholder="เช่น คุยผู้ปกครองแล้ว ให้ยา ดูตั้งใจ ติดตาม">'+v('progress')+'</textarea>')+
-    fld('p_note','ข้อมูลที่อาจารย์ที่เกี่ยวข้องต้องทราบ (ถ้ามี · ไม่ระบุการวินิจฉัย)','<input id="p_note" maxlength="2000" value="'+v('note')+'">'),
+  return api('psy_rec', Object.assign({ tbl: tbl, id: sid, token: PSY.token, reqId: rid() }, body)).then(function(r){
+    PSY.last = Date.now(); if (PSY.sid !== sid) return; PSY.data = r.data; toast(r.message); if (SUB === 'psy') renderPsyData($('subBody')); })
+    .catch(function(err){ if (err.code === 'PSY_LOCKED'){ psyLock(true); if (SUB === 'psy') renderSub(); }
+      if (err.code === 'CONFLICT' && PSY.token){ api('psy_read', { id: sid, token: PSY.token }).then(function(d){ PSY.data = d; if (SUB === 'psy') renderPsyData($('subBody')); }); } throw err; });
+}
+function openPsy(tbl, key){
+  var rec = psyRec(tbl, key), F = PSYF[tbl], C = INIT.choices, sid = PSY.sid;
+  var v = function(k){ return rec ? esc(rec[k]) : ''; };
+  var inp = function(f){ var id = 'p_'+f[0], cur = rec ? String(rec[f[0]]==null?'':rec[f[0]]) : '';
+    if (f[2] === 'd') return fld(id, f[1], '<input type="date" id="'+id+'" value="'+esc(rec ? cur.slice(0,10) : (/date$/.test(f[0]) && (f[0]==='date'||f[0]==='start_date') ? INIT.today : ''))+'">');
+    if (f[2].indexOf('l:') === 0) return fld(id, f[1], '<select id="'+id+'">'+opts(C[f[2].slice(2)]||[], cur, '—')+'</select>');
+    if (f[2] === 'a') return fld(id, f[1], '<textarea id="'+id+'" maxlength="4000" rows="3" placeholder="'+esc(f[3]||'')+'">'+v(f[0])+'</textarea>');
+    return fld(id, f[1], '<input id="'+id+'" maxlength="2000" value="'+v(f[0])+'">'); };
+  var short = F.filter(function(f){ return f[2] !== 'a'; }), long = F.filter(function(f){ return f[2] === 'a'; });
+  PSY.last = Date.now();
+  dlg2((rec?'แก้ไข':'เพิ่ม')+' '+PSYNAME[tbl]+' · '+B.profile.name,
+    '<div class="ctx">🔒 บันทึกลงไฟล์ข้อมูลลับเท่านั้น ไม่ผ่าน DB_MAIN · การเพิ่ม/แก้ไข/ลบถูกจดใน _บันทึกการเข้าถึง</div><div class="grid2">'+short.map(inp).join('')+'</div>'+long.map(inp).join(''),
     'บันทึก', function(){
       if (!PSY.token || PSY.sid !== sid) return Promise.reject(new Error('ส่วนข้อมูลลับล็อกแล้ว กรุณาใส่ PIN ใหม่'));
-      var f = { date: $('p_date').value, clinician: $('p_clinician').value.trim(), status: $('p_status').value, next_date: $('p_next').value, progress: $('p_progress').value.trim(), note: $('p_note').value.trim() };
-      if (rec) Object.keys(f).forEach(function(k){ var o = String(rec[k]==null?'':rec[k]); if (/date/.test(k)) o = o.slice(0,10); if (o === f[k]) delete f[k]; });
+      var f = {}; F.forEach(function(x){ var e = $('p_'+x[0]); f[x[0]] = e.value.trim(); });
+      if (rec) Object.keys(f).forEach(function(k){ var o = String(rec[k]==null?'':rec[k]); if (/date$/.test(k)) o = o.slice(0,10); if (o === f[k]) delete f[k]; });
       if (rec && !Object.keys(f).length) return Promise.reject(new Error('ยังไม่มีการเปลี่ยนแปลง'));
-      if (!rec && !f.progress && !f.note && !f.status) return Promise.reject(new Error('กรุณาพิมพ์บันทึกความคืบหน้า'));
-      PSY.last = Date.now();
-      return api('psy_pf_save', { id: sid, token: PSY.token, key: key||'', ver: rec ? rec.ver : '', fields: f, reqId: req }).then(function(r){
-        PSY.last = Date.now(); if (PSY.sid !== sid) return; PSY.data = r.data; toast(r.message); if (SUB === 'psy') renderPsyData($('subBody')); })
-        .catch(function(err){ if (err.code === 'PSY_LOCKED'){ psyLock(true); if (SUB === 'psy') renderSub(); } if (err.code === 'CONFLICT'){ api('psy_read', { id: sid, token: PSY.token }).then(function(d){ PSY.data = d; if (SUB === 'psy') renderPsyData($('subBody')); }); } throw err; });
+      return psyCall(tbl, { op:'save', key: key||'', ver: rec ? rec.ver : '', fields: f });
     });
+}
+function psyDel(tbl, key){
+  var rec = psyRec(tbl, key); if (!rec) return;
+  var lab = tbl === 'pf' ? [thd(rec.date), rec.status, rec.progress||rec.note].filter(Boolean).join(' · ') : [thd(rec.start_date), rec.tx_type, rec.status].filter(Boolean).join(' · ');
+  dlg2('ลบ '+PSYNAME[tbl], '<div class="ctx">'+esc(lab)+'</div><p style="margin-top:0">รายการนี้จะหายจากตาราง แต่<b>กู้คืนได้</b>ที่ "รายการที่ลบแล้ว" · การลบถูกจดใน _บันทึกการเข้าถึง</p>', 'ลบ', function(){
+    return psyCall(tbl, { op:'delete', key:key, ver:rec.ver }); });
+  $('d2Save').className = 'danger';
 }
 function armIdle(sec){ PSY.idle = sec; clearInterval(PSY.timer); PSY.timer = setInterval(tickIdle, 1000); }
 function tickIdle(){
