@@ -147,6 +147,7 @@ i.sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:
 .sg .sl{font-size:12px;line-height:20px;padding:0 4px;border-radius:4px;background:var(--soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sg.fut .sb{background:none;border:1px dashed var(--faint)}.sg.fut .sl{background:none;border:1px dashed var(--faint);color:var(--faint)}
 .sg.now .sb{outline:2px solid var(--brand2);outline-offset:1px}
+.mm-fu{margin-top:6px;padding:4px 6px;border-radius:6px;background:var(--soft);color:var(--ink);font-size:12px;white-space:pre-wrap}
 .sg.emp .sb,.pseg.emp .pst,.legend i.emp{background:repeating-linear-gradient(45deg,var(--card),var(--card) 5px,var(--line) 5px,var(--line) 7px);box-shadow:inset 0 0 0 1px var(--line)}
 .rbody{position:relative}.tline{position:absolute;top:0;bottom:0;left:106px;right:0;pointer-events:none}.today{position:absolute;top:0;bottom:0;width:2px;background:var(--brand2)}
 .nlist{display:grid;gap:8px;max-height:40vh;overflow:auto;margin-bottom:12px}
@@ -560,12 +561,15 @@ function renderReviews(el){
   bindEdits(el);
 }
 function renderFU(el){
-  if (!B.followups){ el.innerHTML = nosrc('บันทึกติดตาม', 'สร้างได้จากเมนู ระบบติดตาม > บันทึกติดตาม'); return; }
-  if (!B.followups.length){ el.innerHTML = '<div class="panel empty">ไม่มีบันทึกติดตาม</div>'; return; }
-  el.innerHTML = '<div class="tablewrap"><table><thead><tr><th>วันที่</th><th>ประเภท</th><th>ประเด็น</th><th>ข้อตกลง</th><th>การยอมรับ</th><th>วันนัดดูผล / ผล</th><th>ผู้ดำเนินการ</th></tr></thead><tbody>'+
-    B.followups.map(function(f){ var res = f.result ? esc(f.result) : (f.due ? 'นัดตามแผน '+thd(f.due)+'<div class="hint">ยังไม่บันทึกผล</div>' : '<span class="hint">—</span>');
-      return '<tr><td>'+thd(f.date)+'</td><td>'+dash(f.kind)+'</td><td class="cmt">'+dash(f.issue)+'</td><td class="cmt">'+dash(f.commitment)+'</td><td>'+dash(f.consent)+'</td><td>'+res+'</td><td><span class="hint">'+esc(f.actor||f.recorder)+'</span></td></tr>'; }).join('')+
-    '</tbody></table></div><div class="note">แก้ไขบันทึกติดตามในแท็บ "บันทึกติดตาม" ของ DB_MAIN</div>';
+  var add = '<button class="sm pri" data-edit="fu" data-k="">+ เพิ่มบันทึกติดตาม</button>';
+  var rows = B.followups || [];
+  if (!rows.length){ el.innerHTML = '<div class="filters">'+add+'</div><div class="panel empty">ไม่มีบันทึกติดตาม</div>'; bindEdits(el); return; }
+  el.innerHTML = '<div class="filters">'+add+'</div><div class="tablewrap"><table><thead><tr><th>วันที่</th><th>ประเภท</th><th>ประเด็น / สิ่งที่ทำ</th><th>ข้อตกลง</th><th>การยอมรับ</th><th>วันนัดดูผล / ผล</th><th>ผู้ดำเนินการ</th><th></th></tr></thead><tbody>'+
+    rows.map(function(f){ var res = f.result ? esc(f.result)+(f.due?'<div class="hint">นัด '+thd(f.due)+'</div>':'') : (f.due ? 'นัด '+thd(f.due)+'<div class="hint">ยังไม่บันทึกผล</div>' : '<span class="hint">—</span>');
+      return '<tr><td>'+thd(f.date)+'</td><td>'+dash(f.kind)+'</td><td class="cmt">'+dash(f.issue)+'</td><td class="cmt">'+dash(f.commitment)+'</td><td>'+dash(f.consent)+'</td><td>'+res+'</td><td><span class="hint">'+esc(f.actor||f.recorder)+'</span></td>'+
+        '<td><button class="sm" data-edit="fu" data-k="'+esc(f.fu_id)+'">แก้ไข</button></td></tr>'; }).join('')+
+    '</tbody></table></div><div class="note">บันทึกล่าสุดจะแสดงในโหมดประชุมรอบถัดไป (ช่อง "การดำเนินการล่าสุด") · ห้ามใส่ข้อมูลสุขภาพ/การรักษา ให้บันทึกในส่วน 🔒 ข้อมูลลับ</div>';
+  bindEdits(el);
 }
 function renderAF(el){
   var add = '<button class="sm pri" data-edit="af" data-k="">+ เพิ่มคะแนนปีการศึกษา</button>';
@@ -639,10 +643,21 @@ function openForm(kind, key){
       fld('f_credits','หน่วยกิต (ถ้ามี)','<input id="f_credits" name="credits" inputmode="decimal" value="'+esc(rec?rec.credits:'')+'">')+'</div>'+
       fld('f_note','หมายเหตุ','<input id="f_note" name="note" value="'+esc(rec?rec.note:'')+'">');
     FORM_ROTS = rots; }
+  if (kind === 'fu'){ rec = key ? (B.followups||[]).filter(function(f){ return f.fu_id === key; })[0] : null; title = rec ? 'แก้ไขบันทึกติดตาม' : 'เพิ่มบันทึกติดตาม';
+    var v = function(k){ return rec ? esc(rec[k]) : ''; }, dv = function(k){ return rec ? esc(String(rec[k]||'').slice(0,10)) : ''; };
+    h = '<div class="ctx"><b>'+esc(p.name)+'</b> ('+esc(p.id)+')<br><span class="hint">บันทึกนี้แสดงในโหมดประชุมและรายงาน PDF · ข้อมูลสุขภาพ/การรักษาให้บันทึกในส่วน 🔒 ข้อมูลลับ</span></div>'+
+      '<div class="grid2">'+fld('f_date','วันที่','<input type="date" id="f_date" name="date" value="'+(rec?dv('date'):INIT.today)+'">')+
+      fld('f_kind','ประเภท (พิมพ์ได้อิสระ)','<input id="f_kind" name="kind" maxlength="200" value="'+v('kind')+'" placeholder="เช่น คุยผู้ปกครอง / พูดคุย / ตักเตือน">')+'</div>'+
+      fld('f_issue','ประเด็น / สิ่งที่ทำ','<textarea id="f_issue" name="issue" maxlength="2000" placeholder="เช่น คุยผู้ปกครองแล้ว นักเรียนดูตั้งใจขึ้น">'+v('issue')+'</textarea>')+
+      fld('f_commitment','สิ่งที่นักเรียนตกลงจะทำ (ถ้ามี)','<input id="f_commitment" name="commitment" maxlength="2000" value="'+v('commitment')+'">')+
+      '<div class="grid2">'+fld('f_consent','การยอมรับของนักเรียน (ถ้ามี)','<select id="f_consent" name="consent">'+opts(C.fu_consent||[], rec?rec.consent:'', '—')+'</select>')+
+      fld('f_actor','ผู้ดำเนินการ (ถ้ามี)','<input id="f_actor" name="actor" maxlength="200" value="'+v('actor')+'" placeholder="เช่น อ.ที่ปรึกษา">')+
+      fld('f_due','วันนัดดูผล (ถ้ามี)','<input type="date" id="f_due" name="due" value="'+dv('due')+'">')+
+      fld('f_result','ผลเมื่อถึงวันนัด','<select id="f_result" name="result">'+opts(C.fu_result||[], rec?rec.result:'', '— ยังไม่ถึง/ยังไม่บันทึก —')+'</select>')+'</div>'; }
   var isNew = !rec, rsSoft = kind === 'rs';
-  h += fld('f_reason', isNew ? 'หมายเหตุการเพิ่ม (ถ้ามี)' : rsSoft ? 'เหตุผลการแก้ไข <span class="hint">(ไม่บังคับเมื่อกรอกครั้งแรก · บังคับเมื่อแก้ค่าที่บันทึกไว้แล้ว)</span>' : 'เหตุผลการแก้ไข <b style="color:var(--err)">*</b>', '<textarea id="f_reason" maxlength="500" placeholder="'+(isNew?'เช่น ผลจากคณะกรรมการรายวิชา':'เช่น อาจารย์ผู้ประเมินแจ้งแก้ไขทางอีเมลวันที่ ...')+'"></textarea>')+
+  h += fld('f_reason', kind === 'fu' ? 'หมายเหตุ (ถ้ามี · เก็บในประวัติแก้ไข)' : isNew ? 'หมายเหตุการเพิ่ม (ถ้ามี)' : rsSoft ? 'เหตุผลการแก้ไข <span class="hint">(ไม่บังคับเมื่อกรอกครั้งแรก · บังคับเมื่อแก้ค่าที่บันทึกไว้แล้ว)</span>' : 'เหตุผลการแก้ไข <b style="color:var(--err)">*</b>', '<textarea id="f_reason" maxlength="500" placeholder="'+(kind==='fu'?'ไม่บังคับ':isNew?'เช่น ผลจากคณะกรรมการรายวิชา':'เช่น อาจารย์ผู้ประเมินแจ้งแก้ไขทางอีเมลวันที่ ...')+'"></textarea>')+
     '<div class="msg err" id="f_msg" role="alert"></div>';
-  FORM = { kind:kind, key: rec ? (kind==='wr'?rec.wr_id:kind==='rs'?rec.rr_id:rec.key) : '', ver: rec ? rec.ver : '', rec: rec, reqId: rid(), busy:false };
+  FORM = { kind:kind, key: rec ? (kind==='wr'?rec.wr_id:kind==='rs'?rec.rr_id:kind==='fu'?rec.fu_id:rec.key) : '', ver: rec ? rec.ver : '', rec: rec, reqId: rid(), busy:false };
   $('dlgTitle').textContent = title; $('dlgBody').innerHTML = h; $('dlgSave').disabled = false; $('dlgSave').textContent = 'บันทึก';
   if ($('f_pick')) $('f_pick').onchange = function(){ var r = FORM_ROTS[+this.value]; if (!r) return;
     $('f_course_name').value = r.course.replace(/\s*·\s*กลุ่ม.*$/,''); $('f_department').value = r.dept; $('f_rot_start').value = r.start; $('f_rot_end').value = r.end; $('f_acad_year').value = acadYear(r.start); };
@@ -661,7 +676,7 @@ $('dlgForm').onsubmit = function(e){
     if (!r || v !== old) f[x.name] = v; });
   var reason = $('f_reason').value.trim(), msg = $('f_msg');
   if (r && !Object.keys(f).length){ msg.textContent = 'ยังไม่มีการเปลี่ยนแปลง'; return; }
-  var needR = FORM.kind !== 'rs' ? true : !sameSession(r) && Object.keys(f).some(function(k){ return k !== 'follow_next' && String(r[k]==null?'':r[k]) !== ''; });
+  var needR = FORM.kind === 'fu' ? false : FORM.kind !== 'rs' ? true : !sameSession(r) && Object.keys(f).some(function(k){ return k !== 'follow_next' && String(r[k]==null?'':r[k]) !== ''; });
   if (r && needR && reason.length < 3){ msg.textContent = 'กรุณาระบุเหตุผลการแก้ไข (แก้ค่าที่บันทึกไว้แล้ว)'; $('f_reason').focus(); return; }
   if (FORM.kind === 'af' && f.score !== undefined && f.score !== '' && (+f.score < 0 || +f.score > 100)){ msg.textContent = 'คะแนนต้องอยู่ระหว่าง 0–100'; return; }
   FORM.busy = true; $('dlgSave').disabled = true; $('dlgSave').textContent = 'กำลังบันทึก...'; msg.textContent = '';
@@ -701,20 +716,46 @@ function renderPsy(el){
 var PSYTABS = [
   ['mh','ประเมินสุขภาพจิต',[['date','วันที่'],['assessor','ผู้ประเมิน'],['tools','เครื่องมือ'],['q2','2Q'],['q9','9Q'],['q8','8Q'],['phq9','PHQ-9'],['gad7','GAD-7'],['risk_level','ความเสี่ยง'],['impression','Clinical impression'],['plan','แผนการดูแล'],['referral','ส่งต่อ'],['next_date','นัดถัดไป']]],
   ['tx','การรักษาทางจิตเวช',[['start_date','เริ่มรักษา'],['diagnosis','การวินิจฉัย'],['tx_type','ประเภท'],['medication','ยาและขนาด'],['clinician','แพทย์ผู้รักษา'],['place','สถานที่'],['status','สถานะ'],['next_date','นัดถัดไป'],['end_date','สิ้นสุด'],['note','หมายเหตุ']]],
-  ['pf','F/U จิตเวช',[['date','วันที่'],['clinician','ผู้ดูแล'],['status','สถานะ'],['next_date','นัดถัดไป'],['note','ข้อมูลที่อาจารย์ต้องทราบ']]],
+  ['pf','F/U จิตเวช',[['date','วันที่'],['clinician','ผู้ดูแล'],['status','สถานะ'],['progress','บันทึกความคืบหน้า'],['next_date','นัดถัดไป'],['note','ข้อมูลที่อาจารย์ต้องทราบ']]],
   ['rp','ข้อมูลจำกัดสิทธิ์',[['date','วันที่'],['category','ประเภท'],['detail','รายละเอียด'],['recorder','ผู้บันทึก']]]
 ];
 function renderPsyData(el){
   var d = PSY.data;
   el.innerHTML = '<div class="secbar"><span>🔓 ปลดล็อกเฉพาะ '+esc(B.profile.name)+' · <span id="psyLeft"></span></span><button class="sm danger" id="psyLockBtn">ล็อกทันที</button></div>'+
-    PSYTABS.map(function(t){ var rows = d[t[0]] || [];
-      var body = !d.sources[t[0]] ? '<div class="nosrc"><b>ยังไม่มีแหล่งข้อมูล</b> — ยังไม่มีแท็บนี้ในไฟล์ข้อมูลลับ</div>' : !rows.length ? '<div class="hint" style="padding:6px 0">ไม่มีข้อมูล</div>' :
-        '<div class="tablewrap"><table><thead><tr>'+t[2].map(function(c){ return '<th>'+c[1]+'</th>'; }).join('')+'</tr></thead><tbody>'+
-        rows.slice().sort(function(a,b){ var k=t[2][0][0]; return a[k] < b[k] ? 1 : -1; }).map(function(r){ return '<tr>'+t[2].map(function(c){ var v = r[c[0]]; return '<td class="cmt">'+(/date/.test(c[0])&&v?thd(v):dash(v))+'</td>'; }).join('')+'</tr>'; }).join('')+'</tbody></table></div>';
-      return '<div class="panel"><h3>'+t[1]+'</h3>'+body+'</div>'; }).join('')+
+    PSYTABS.map(function(t){ var rows = d[t[0]] || [], pf = t[0] === 'pf';
+      var body = !d.sources[t[0]] && !pf ? '<div class="nosrc"><b>ยังไม่มีแหล่งข้อมูล</b> — ยังไม่มีแท็บนี้ในไฟล์ข้อมูลลับ</div>' : !rows.length ? '<div class="hint" style="padding:6px 0">ไม่มีข้อมูล</div>' :
+        '<div class="tablewrap"><table><thead><tr>'+t[2].map(function(c){ return '<th>'+c[1]+'</th>'; }).join('')+(pf?'<th></th>':'')+'</tr></thead><tbody>'+
+        rows.slice().sort(function(a,b){ var k=t[2][0][0]; return a[k] < b[k] ? 1 : -1; }).map(function(r){ return '<tr>'+t[2].map(function(c){ var v = r[c[0]]; return '<td class="cmt">'+(/date/.test(c[0])&&v?thd(v):dash(v))+'</td>'; }).join('')+
+          (pf?'<td><button class="sm" data-pf="'+esc(r.pf_id)+'">แก้ไข</button></td>':'')+'</tr>'; }).join('')+'</tbody></table></div>';
+      return '<div class="panel"><h3>'+t[1]+(pf?' <button class="sm pri" data-pf="" style="margin-left:8px">+ เพิ่ม F/U จิตเวช</button>':'')+'</h3>'+body+'</div>'; }).join('')+
     '<div class="note">ข้อมูลส่วนนี้อ่านจากไฟล์ข้อมูลลับโดยตรง ไม่ถูกเก็บในเครื่องหรือ DB_MAIN · การเปิดดูถูกบันทึกในแท็บ _บันทึกการเข้าถึง ของไฟล์จิตเวช · แก้ไขข้อมูลในไฟล์จิตเวชโดยตรง</div>';
   $('psyLockBtn').onclick = function(){ psyLock(); renderSub(); };
+  [].forEach.call(el.querySelectorAll('[data-pf]'), function(b){ b.onclick = function(){ openPf(b.dataset.pf); }; });
   tickIdle();
+}
+function openPf(key){
+  var rec = key ? (PSY.data.pf||[]).filter(function(r){ return r.pf_id === key; })[0] : null, sid = PSY.sid, req = rid();
+  var v = function(k){ return rec ? esc(rec[k]) : ''; }, dv = function(k){ return rec ? esc(String(rec[k]||'').slice(0,10)) : ''; };
+  PSY.last = Date.now();
+  dlg2((rec?'แก้ไข':'เพิ่ม')+' F/U จิตเวช · '+B.profile.name,
+    '<div class="ctx">🔒 บันทึกลงไฟล์ข้อมูลลับเท่านั้น ไม่ผ่าน DB_MAIN · การเพิ่ม/แก้ไขถูกจดใน _บันทึกการเข้าถึง</div>'+
+    '<div class="grid2">'+fld('p_date','วันที่','<input type="date" id="p_date" value="'+(rec?dv('date'):INIT.today)+'">')+
+    fld('p_clinician','ผู้ดูแล','<input id="p_clinician" maxlength="200" value="'+v('clinician')+'">')+
+    fld('p_status','สถานะ (ถ้ามี)','<select id="p_status">'+opts(INIT.choices.pf_status||[], rec?rec.status:'', '—')+'</select>')+
+    fld('p_next','นัดถัดไป (ถ้ามี)','<input type="date" id="p_next" value="'+dv('next_date')+'">')+'</div>'+
+    fld('p_progress','บันทึกความคืบหน้า','<textarea id="p_progress" maxlength="4000" rows="4" placeholder="เช่น คุยผู้ปกครองแล้ว ให้ยา ดูตั้งใจ ติดตาม">'+v('progress')+'</textarea>')+
+    fld('p_note','ข้อมูลที่อาจารย์ที่เกี่ยวข้องต้องทราบ (ถ้ามี · ไม่ระบุการวินิจฉัย)','<input id="p_note" maxlength="2000" value="'+v('note')+'">'),
+    'บันทึก', function(){
+      if (!PSY.token || PSY.sid !== sid) return Promise.reject(new Error('ส่วนข้อมูลลับล็อกแล้ว กรุณาใส่ PIN ใหม่'));
+      var f = { date: $('p_date').value, clinician: $('p_clinician').value.trim(), status: $('p_status').value, next_date: $('p_next').value, progress: $('p_progress').value.trim(), note: $('p_note').value.trim() };
+      if (rec) Object.keys(f).forEach(function(k){ var o = String(rec[k]==null?'':rec[k]); if (/date/.test(k)) o = o.slice(0,10); if (o === f[k]) delete f[k]; });
+      if (rec && !Object.keys(f).length) return Promise.reject(new Error('ยังไม่มีการเปลี่ยนแปลง'));
+      if (!rec && !f.progress && !f.note && !f.status) return Promise.reject(new Error('กรุณาพิมพ์บันทึกความคืบหน้า'));
+      PSY.last = Date.now();
+      return api('psy_pf_save', { id: sid, token: PSY.token, key: key||'', ver: rec ? rec.ver : '', fields: f, reqId: req }).then(function(r){
+        PSY.last = Date.now(); if (PSY.sid !== sid) return; PSY.data = r.data; toast(r.message); if (SUB === 'psy') renderPsyData($('subBody')); })
+        .catch(function(err){ if (err.code === 'PSY_LOCKED'){ psyLock(true); if (SUB === 'psy') renderSub(); } if (err.code === 'CONFLICT'){ api('psy_read', { id: sid, token: PSY.token }).then(function(d){ PSY.data = d; if (SUB === 'psy') renderPsyData($('subBody')); }); } throw err; });
+    });
 }
 function armIdle(sec){ PSY.idle = sec; clearInterval(PSY.timer); PSY.timer = setInterval(tickIdle, 1000); }
 function tickIdle(){
@@ -980,7 +1021,7 @@ function renderMeeting(){
       '<div class="hint">รอบที่ '+esc(r.rn||r.round)+' · ประชุม '+(r.meeting?thd(r.meeting):'ยังไม่ระบุ')+' · ข้อมูล '+thd(r.start)+' – '+thd(r.end)+'</div></div>'+
       '<div class="mm-prog" id="mmProg"></div>'+sel+
       '<button id="mmNote" type="button">📝 ข้อสรุปที่ประชุม</button><button id="mmPdf" type="button">📄 สรุปผลประชุม (PDF)</button>'+
-      (closed?'<span class="pill">🔒 ปิดรอบแล้ว</span>':'<button class="danger" id="mmClose">ปิดรอบ…</button>')+'</div>'+
+      (closed?'<span class="pill">🔒 ปิดรอบแล้ว</span><button id="mmReopen" type="button">เปิดรอบกลับ…</button>':'<button class="danger" id="mmClose">ปิดรอบ…</button>')+'</div>'+
     (r.conclusion?'<div class="note" style="white-space:pre-wrap"><b>ข้อสรุปที่ประชุม:</b> '+esc(r.conclusion)+'</div>':'')+
     '<div class="mm-tools">'+['ต้องพิจารณา','ดูประกอบ','โดดเด่น','ทุกคน'].map(function(k){ return '<button class="chip" data-mf="'+k+'" aria-pressed="'+(MEET.f===k)+'">'+k+' ('+(c[k]||0)+')</button>'; }).join('')+
       '<input type="search" id="mmQ" placeholder="ค้นหาชื่อหรือรหัส" value="'+esc(MEET.q)+'"></div>'+
@@ -990,6 +1031,7 @@ function renderMeeting(){
       '"จัดการแล้ว" = หยุดนับเกณฑ์และเริ่มนับใหม่ตั้งแต่เวลาที่ติ๊ก (เอาติ๊กออก = กลับไปนับแบบเดิม) · ห้ามใส่ข้อมูลสุขภาพ/การวินิจฉัย</div></div>';
   MEET.msg = '';
   if ($('mmClose')) $('mmClose').onclick = openClose;
+  if ($('mmReopen')) $('mmReopen').onclick = openReopen;
   $('mmNote').onclick = openMeetNote; $('mmPdf').onclick = openSummary;
   if ($('mmRound')) $('mmRound').onchange = function(){ loadMeeting(this.value); };
   [].forEach.call(el.querySelectorAll('[data-mf]'), function(b){ b.onclick = function(){ MEET.f = b.dataset.mf; [].forEach.call(el.querySelectorAll('[data-mf]'), function(x){ x.setAttribute('aria-pressed', String(x === b)); }); mmRows(); }; });
@@ -1017,7 +1059,7 @@ function mmRows(){
       '<td><div class="mm-pills" title="ติดตาม · เฝ้าระวัง · ไม่จบรายวิชา">'+mmPill(r.n_follow,'var(--s2)')+mmPill(r.n_watch,'var(--s3)')+mmPill(r.n_fail,'var(--s4)')+'</div>'+mmBar(r)+
         '<div class="hint">'+r.n_records+' บันทึก'+(r.vs_prev?' · '+esc(r.vs_prev):'')+(r.concern_depts?'<br>'+esc(r.concern_depts):'')+(r.teacher_actions?'<br>'+esc(r.teacher_actions):'')+'</div>'+
         (r.comments?'<details class="cm"><summary>ความเห็นอาจารย์</summary><div>'+esc(r.comments)+'</div></details>':'')+'</td>'+
-      '<td class="hint">'+(r.prev_decision||r.prev_plan?(r.prev_decision?'<b>'+esc(r.prev_decision)+'</b><br>':'')+esc(r.prev_plan):'—')+'</td>'+
+      '<td class="hint">'+(r.prev_decision||r.prev_plan?(r.prev_decision?'<b>'+esc(r.prev_decision)+'</b><br>':'')+esc(r.prev_plan):'—')+(r.esc&&r.esc.fu?'<div class="mm-fu">📌 บันทึกติดตามล่าสุด: '+esc(r.esc.fu)+'</div>':'')+'</td>'+
       '<td>'+inp(r,'progress','พัฒนาการ')+inp(r,'prev_outcome','ผลของแผนรอบก่อน','gap')+'</td>'+
       '<td>'+inp(r,'decision','มติ')+'<textarea data-f="plan" maxlength="2000" placeholder="แผน (ห้ามใส่ข้อมูลสุขภาพ)"'+dis+'>'+esc(r.plan)+'</textarea></td>'+
       '<td>'+inp(r,'plan_owner','ผู้รับผิดชอบ')+'<input type="date" data-f="next_check" class="gap" value="'+esc(r.next_check)+'" aria-label="วันติดตามผล"'+dis+'></td>'+
@@ -1128,11 +1170,19 @@ function openClose(){
   dlg2('ปิดรอบ '+r.id,
     '<div class="ctx">รอบที่ '+esc(r.rn||r.round)+' · ชั้นปี '+esc(r.year)+' · ประชุม '+(r.meeting?thd(r.meeting):'—')+'<br>มีมติแล้ว '+dec+'/'+rows.length+' คน</div>'+
     (miss?'<div class="warnbox">ยังมี <b>'+miss+'</b> คนในกลุ่ม "ต้องพิจารณา" ที่ยังไม่มีมติ</div>':'<div class="msg ok" style="margin:0 0 12px">ทุกคนในกลุ่ม "ต้องพิจารณา" มีมติแล้ว</div>')+
-    '<p class="hint" style="margin-top:0">เมื่อปิดรอบ: ข้อกังวลในช่วงนี้ของนักเรียนที่มีมติแล้ว จะเปลี่ยนเป็น "ทบทวนแล้ว" และรอบนี้จะแก้ไขไม่ได้อีก 🔒 (เปิดกลับจากหน้าเว็บไม่ได้)</p>'+
+    '<p class="hint" style="margin-top:0">เมื่อปิดรอบ: ข้อกังวลในช่วงนี้ของนักเรียนที่มีมติแล้ว จะเปลี่ยนเป็น "ทบทวนแล้ว" และรอบนี้จะถูกล็อก 🔒 แก้ไขไม่ได้ (ถ้าต้องการแก้ภายหลัง กดปุ่ม "เปิดรอบกลับ" ได้)</p>'+
     fld('d2Text','พิมพ์รหัสรอบเพื่อยืนยัน','<input id="d2Text" autocomplete="off" placeholder="'+esc(r.id)+'">'), 'ปิดรอบ', function(){
       var t = $('d2Text').value.trim(); if (t !== r.id) return Promise.reject(new Error('พิมพ์รหัสรอบให้ตรง: '+r.id));
       return api('adm_round_close', { id:r.id, confirm:t, reqId: rid() }).then(function(x){ toast(x.message); LOADED.cohort = false; loadMeeting(r.id); }); });
   $('d2Save').className = 'danger';
+}
+function openReopen(){
+  var r = MEET.d.round;
+  dlg2('เปิดรอบกลับ '+r.id,
+    '<div class="ctx">รอบที่ '+esc(r.rn||r.round)+' · ชั้นปี '+esc(r.year)+' · ประชุม '+(r.meeting?thd(r.meeting):'—')+'</div>'+
+    '<p style="margin-top:0">รอบนี้จะกลับมาแก้ไขมติ/แผนได้ตามปกติ และผลประเมินที่ถูกเปลี่ยนเป็น "ทบทวนแล้ว" ตอนปิดรอบ จะกลับเป็น "รอทบทวน"</p>'+
+    '<p class="hint">มติที่กรอกไว้ไม่หาย · ระบบเก็บประวัติการเปิดรอบกลับไว้ · แก้เสร็จแล้วกด "ปิดรอบ" ใหม่ได้</p>', 'เปิดรอบกลับ', function(){
+      return api('adm_round_reopen', { id:r.id, reqId: rid() }).then(function(x){ toast(x.message); LOADED.cohort = false; loadMeeting(r.id); }); });
 }
 /* ---------- ข้อสรุปที่ประชุม + สรุปผลการประชุมเป็น PDF ---------- */
 function openMeetNote(){
