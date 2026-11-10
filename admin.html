@@ -48,6 +48,23 @@ nav.tabs button[aria-selected=true]{color:var(--ink);font-weight:600;border-bott
 .tiles{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;margin-top:12px}
 @media(max-width:900px){.tiles{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:520px){.tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.mc{border:1px solid var(--line);border-left:5px solid #c0392b;border-radius:10px;padding:12px 14px;background:var(--card);margin-bottom:10px}
+.mc.done{border-left-color:#2e8b57;background:var(--soft)}
+.mc .top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap}
+.badge{display:inline-flex;gap:4px;align-items:center;font-size:13px;font-weight:600;padding:3px 10px;border-radius:999px}
+.badge.open{background:#fdecea;color:#a12a1f}.badge.closed{background:#e6f4ec;color:#1f6b43}
+.mc .iss{font-size:15px;margin:8px 0 6px;font-weight:600;white-space:pre-wrap}
+.mc dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:0;font-size:14px}.mc dt{color:var(--muted)}.mc dd{margin:0;white-space:pre-wrap}
+.mc .act{margin-top:8px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.tog{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;background:var(--card)}
+.tog label{padding:5px 12px;font-size:13px;cursor:pointer;display:flex;gap:5px;align-items:center;margin:0}
+.tog label.on.o{background:#fdecea;color:#a12a1f;font-weight:600}.tog label.on.c{background:#e6f4ec;color:#1f6b43;font-weight:600}
+.tog input{margin:0;width:auto}
+.fld .tog label{display:flex;color:inherit;margin:0;font-size:13px}.fld .tog input{width:auto}.fld .lab{display:block;font-size:13px;color:var(--muted);margin-bottom:4px}
+.mres{margin-top:8px;padding:8px 10px;border-radius:8px;background:var(--card);border:1px dashed #9cc9ae;font-size:14px;white-space:pre-wrap}
+.oldrev{margin-top:10px}.oldrev>summary{cursor:pointer;color:var(--muted);font-size:14px;padding:8px 0}
+.scard .cnt{color:#a12a1f;font-weight:700}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .badge.open,:root:not([data-theme="light"]) .tog label.on.o{background:#4a1f1b;color:#ffb4a8}:root:not([data-theme="light"]) .badge.closed,:root:not([data-theme="light"]) .tog label.on.c{background:#173a28;color:#9fe0b8}}
 .scards{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px;margin:0 0 10px}
 .scard{display:flex;flex-direction:column;justify-content:flex-start;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px;color:var(--ink);cursor:pointer;font:inherit}
 .scard:hover{border-color:var(--brand2)}.scard[aria-current=true]{border-color:var(--brand2);box-shadow:inset 0 0 0 1px var(--brand2)}
@@ -402,7 +419,7 @@ function renderPerson(){
   ];
   if (afx && afx.score !== '' && afx.score != null) tiles.push([esc(afx.score), '/100', 'จิตพิสัย ปีการศึกษา '+esc(afx.acad_year), afx.grader ? esc(afx.grader) : '', '']);
   var rv = (B.reviews||[])[0], fol = B.follow, on = !!(fol && fol.active);
-  var subs = [['eval','ผลประเมิน ('+ev.length+')'],['rev','ทบทวน/แผนดูแล'],['fu','บันทึกติดตาม'],['af','จิตพิสัย'],['gr','ผลการเรียน'],['hist','ประวัติแก้ไข'],['psy','🔒 ข้อมูลลับ']];
+  var subs = [['eval','ผลประเมิน ('+ev.length+')'],['rev','ความเห็นที่ประชุม'],['fu','บันทึกติดตาม'],['af','จิตพิสัย'],['gr','ผลการเรียน'],['hist','ประวัติแก้ไข'],['psy','🔒 ข้อมูลลับ']];
   var yb = function(v, lab){ return '<button class="sm" data-ay="'+v+'" aria-pressed="'+(SELAY===v)+'">'+lab+'</button>'; };
   var withEv = YS.filter(function(y){ return y.ev.length || y.af; });
   $('personBody').innerHTML =
@@ -531,13 +548,14 @@ function sumCards(){
   var cut = function(t, n){ t = String(t||'').replace(/\s+/g,' ').trim(); return t.length > n ? t.slice(0, n)+'…' : t; };
   var card = function(k, title, when, html){ return '<button type="button" class="scard'+(html?'':' none')+'" data-sc="'+k+'" aria-current="'+(SUB===k)+'"><div class="t">'+title+(when?'<span>'+when+'</span>':'')+'</div><div class="v">'+(html||'ยังไม่มีข้อมูล')+'</div></button>'; };
   var ev = (B.evals||[]).filter(function(e){ return !e.replaced; }).slice().sort(function(a,b){ return String(b.week_start).localeCompare(String(a.week_start)) || String(b.submitted_at).localeCompare(String(a.submitted_at)); })[0];
-  var rv = (B.reviews||[])[0], fu = (B.followups||[])[0];
+  var fu = (B.followups||[])[0], mc = B.meetc || [], mcOpen = mc.filter(function(x){ return x.status !== 'จบแล้ว'; });
   var af = (B.affective||[]).slice().sort(function(a,b){ return a.acad_year < b.acad_year ? 1 : -1; })[0];
   var gr = (B.grades||[]).slice().sort(function(a,b){ return (b.acad_year+b.semester+b.rot_start) < (a.acad_year+a.semester+a.rot_start) ? -1 : 1; })[0];
   var psyOn = PSY && PSY.token && PSY.sid === B.profile.id;
   return '<div class="scards" aria-label="สรุปข้อมูลล่าสุด">'+
     card('eval', 'ผลประเมินล่าสุด', ev ? thd(ev.week_start) : '', ev ? stat(ev.status)+' '+esc(short(ev.department))+(ev.comment?'<div class="hint">'+esc(cut(ev.comment, 80))+'</div>':'') : '')+
-    card('rev', 'ทบทวน/แผนดูแล', rv ? esc(rv.round_id) : '', rv ? esc(rv.decision ? cut(rv.decision, 70) : (rv.priority || 'ยังไม่บันทึกมติ'))+(rv.next_check?'<div class="hint">นัด '+thd(rv.next_check)+(rv.plan_owner?' · '+esc(cut(rv.plan_owner, 30)):'')+'</div>':'') : '')+
+    card('rev', 'ความเห็นที่ประชุม', mc.length ? thd(mc[0].meeting_date) : '', mc.length ? (mcOpen.length ? '🔴 <span class="cnt">ต้องติดตาม '+mcOpen.length+' เรื่อง</span>' : '✅ ไม่มีเรื่องค้าง')+(mc.length-mcOpen.length ? ' · ✅ จบแล้ว '+(mc.length-mcOpen.length) : '')+
+      '<div class="hint">'+(mcOpen.length ? 'ล่าสุด: '+esc(cut(mcOpen[0].issue, 60)) : 'ล่าสุด: '+esc(cut(mc[0].issue, 60)))+'</div>' : '')+
     card('fu', 'บันทึกติดตามล่าสุด', fu ? thd(fu.date) : '', fu ? esc(cut(fu.issue || fu.kind || '', 90))+(fu.due && !fu.result?'<div class="hint">นัดดูผล '+thd(fu.due)+'</div>':'') : '')+
     card('af', 'จิตพิสัย', af ? 'ปี '+esc(af.acad_year) : '', af ? (af.score===''||af.score==null ? '<span class="hint">ยังไม่กรอกคะแนน</span>' : '<b>'+esc(af.score)+'</b>/100')+(af.note?'<div class="hint">'+esc(cut(af.note, 60))+'</div>':'') : '')+
     card('gr', 'ผลการเรียนล่าสุด', gr ? esc(gr.acad_year)+(gr.semester?'/'+esc(gr.semester):'') : '', gr ? esc(cut(gr.course_name||gr.course_code, 50))+' · เกรด <b>'+dash(gr.grade)+'</b>' : '')+
@@ -571,7 +589,40 @@ function renderEvals(el){
   if ($('repl')) $('repl').onchange = function(){ SHOWREPL = this.checked; renderEvals(el); };
   bindEdits(el);
 }
+var MCF = 'open';
+function mcItem(m){
+  var done = m.status === 'จบแล้ว', k = esc(m.mc_id);
+  return '<div class="mc'+(done?' done':'')+'"><div class="top"><div>'+(done?'<span class="badge closed">✅ จบแล้ว</span>':'<span class="badge open">🔴 ต้องติดตาม</span>')+
+      ' <span class="hint">ประชุม '+thd(m.meeting_date)+(m.round_id?' · รอบ '+esc(m.round_id):'')+'</span></div>'+
+      '<div class="tog" role="radiogroup" aria-label="สถานะปัญหา"><label class="o'+(done?'':' on')+'"><input type="radio" name="mcs_'+k+'" data-mcs="ต้องติดตาม" data-k="'+k+'"'+(done?'':' checked')+'> 🔴 ต้องติดตามปัญหา</label>'+
+      '<label class="c'+(done?' on':'')+'"><input type="radio" name="mcs_'+k+'" data-mcs="จบแล้ว" data-k="'+k+'"'+(done?' checked':'')+'> ✅ ปัญหาจบแล้ว</label></div></div>'+
+    '<div class="iss">'+esc(m.issue)+'</div><dl><dt>ยกเรื่องโดย</dt><dd>'+dash(m.raised_by)+'</dd><dt>สิ่งที่ต้องติดตามต่อ</dt><dd>'+dash(m.follow)+'</dd></dl>'+
+    (m.result ? '<div class="mres"><b>ผลที่ได้:</b> '+esc(m.result)+'</div>' : '')+
+    '<div class="act"><span class="hint">'+esc(m.recorder)+(m.recorded_at?' · '+thd(m.recorded_at):'')+'</span><span><button class="sm" data-edit="mc" data-k="'+k+'">แก้ไข</button> <button class="sm" data-del="mc" data-k="'+k+'">ลบ</button></span></div></div>';
+}
 function renderReviews(el){
+  var L = B.meetc || [], open = L.filter(function(x){ return x.status !== 'จบแล้ว'; }), done = L.filter(function(x){ return x.status === 'จบแล้ว'; });
+  var show = MCF === 'open' ? open : MCF === 'done' ? done : L;
+  var fb = function(v, lab, n){ return '<button class="sm" data-mcf="'+v+'" aria-pressed="'+(MCF===v)+'">'+lab+' ('+n+')</button>'; };
+  var nRev = (B.reviews||[]).length;
+  el.innerHTML = '<div class="filters"><button class="sm pri" data-edit="mc" data-k="">+ เพิ่มความเห็นที่ประชุม</button>'+
+      '<div class="seg2" style="margin-left:8px"><span class="hint">แสดง</span>'+fb('open','ต้องติดตาม',open.length)+fb('done','จบแล้ว',done.length)+fb('all','ทั้งหมด',L.length)+'</div></div>'+
+    (show.length ? show.map(mcItem).join('') : '<div class="panel empty">'+(L.length ? (MCF==='open' ? 'ไม่มีเรื่องที่ต้องติดตาม ✅' : 'ไม่มีรายการในกลุ่มนี้') : 'ยังไม่มีความเห็นจากที่ประชุม — กด "+ เพิ่มความเห็นที่ประชุม"')+'</div>')+
+    '<div class="note">1 ปัญหา = 1 ความเห็น · เปลี่ยนสถานะได้ทีละปัญหา (กด "ปัญหาจบแล้ว" จะเปิดช่อง "ผลที่ได้" ให้กรอก) · ห้ามใส่ข้อมูลสุขภาพ/การรักษา ให้บันทึกในส่วน 🔒 ข้อมูลลับ</div>'+
+    (nRev ? '<details class="oldrev"><summary>บันทึกรอบทบทวนเดิม ('+nRev+' รอบ) — มติ แผน วันนัดของแต่ละรอบ</summary><div id="oldRev"></div></details>' : '');
+  [].forEach.call(el.querySelectorAll('[data-mcf]'), function(b){ b.onclick = function(){ MCF = b.dataset.mcf; renderReviews(el); }; });
+  [].forEach.call(el.querySelectorAll('[data-mcs]'), function(x){ x.onchange = function(){ mcSetStatus(x.dataset.k, x.dataset.mcs, el); }; });
+  bindEdits(el);
+  if (nRev) renderReviewsOld($('oldRev'));
+}
+function mcSetStatus(key, st, el){
+  var m = (B.meetc||[]).filter(function(x){ return x.mc_id === key; })[0]; if (!m) return;
+  if (st === 'จบแล้ว') { openForm('mc', key, { status: 'จบแล้ว' }); renderReviews(el); return; }
+  var req = rid();
+  api('adm_save', { kind:'mc', key:key, ver:m.ver, studentId:CUR, fields:{ status: st }, reason:'', reqId:req }).then(function(res){ if (res.bundle){ B = res.bundle; renderPerson(); } toast(res.message); })
+    .catch(function(err){ if (relogin(err, function(){ mcSetStatus(key, st, el); })) return; toast('ยังไม่ได้บันทึก: '+err.message); if (err.code === 'CONFLICT') openStudent(CUR, true); else renderReviews(el); });
+}
+function renderReviewsOld(el){
   if (!B.reviews){ el.innerHTML = nosrc('ทบทวนรายคน', 'สร้างได้จากเมนู ระบบติดตาม > ทบทวนราย 3 เดือน: เตรียมข้อมูลรอบ'); return; }
   if (!B.reviews.length){ el.innerHTML = '<div class="panel empty">ยังไม่มีรอบทบทวนที่ครอบคลุมนักเรียนคนนี้</div>'; return; }
   el.innerHTML = '<div class="cards">'+B.reviews.map(function(r){
@@ -629,8 +680,8 @@ function renderHist(el){
 /* ---------- ฟอร์มแก้ไข ---------- */
 var FORM = null;
 function bindEdits(el){ [].forEach.call(el.querySelectorAll('[data-edit]'), function(b){ b.onclick = function(){ openForm(b.dataset.edit, b.dataset.k); }; });
-  var kind = { fu:'fu', af:'af', gr:'gr' }[SUB];
-  if (kind && !el.querySelector('.delbox')) { var dl = (B.deleted||[]).filter(function(x){ return x.kind === kind; });
+  var kind = { fu:'fu', af:'af', gr:'gr', rev:'mc' }[SUB];
+  if (kind && el.id !== 'oldRev' && !el.querySelector('.delbox')) { var dl = (B.deleted||[]).filter(function(x){ return x.kind === kind; });
     if (dl.length) el.insertAdjacentHTML('beforeend', delBox(dl.map(function(x){ return { k:x.key, at:x.deleted_at, by:x.deleted_by, label:x.label, attr:'data-rest="'+kind+'"' }; }))); }
   [].forEach.call(el.querySelectorAll('[data-del]'), function(b){ b.onclick = function(){ delRec(b.dataset.del, b.dataset.k); }; });
   [].forEach.call(el.querySelectorAll('[data-rest]'), function(b){ b.onclick = function(){ restRec(b.dataset.rest, b.dataset.k, b.dataset.at); }; }); }
@@ -639,12 +690,12 @@ function delBox(list){
     list.map(function(x){ return '<tr><td class="cmt">'+esc(x.label)+'</td><td>'+esc(x.at)+'</td><td><span class="hint">'+esc(x.by)+'</span></td><td><button class="sm" '+x.attr+' data-k="'+esc(x.k)+'" data-at="'+esc(x.at)+'">กู้คืน</button></td></tr>'; }).join('')+
     '</tbody></table></div></details>';
 }
-var KNAME = { fu:'บันทึกติดตาม', af:'คะแนนจิตพิสัย', gr:'ผลการเรียน' };
-function recOf(kind, key){ var L = kind === 'fu' ? B.followups : kind === 'af' ? B.affective : B.grades; return (L||[]).filter(function(r){ return (kind === 'fu' ? r.fu_id : r.key) === key; })[0]; }
+var KNAME = { fu:'บันทึกติดตาม', af:'คะแนนจิตพิสัย', gr:'ผลการเรียน', mc:'ความเห็นที่ประชุม' };
+function recOf(kind, key){ if (kind === 'mc') return (B.meetc||[]).filter(function(r){ return r.mc_id === key; })[0]; var L = kind === 'fu' ? B.followups : kind === 'af' ? B.affective : B.grades; return (L||[]).filter(function(r){ return (kind === 'fu' ? r.fu_id : r.key) === key; })[0]; }
 function delRec(kind, key){
   var r = recOf(kind, key), req = rid(); if (!r) return;
-  var lab = kind === 'fu' ? [thd(r.date), r.kind, r.issue].filter(Boolean).join(' · ') : kind === 'af' ? 'ปีการศึกษา '+r.acad_year+' · คะแนน '+r.score : [r.acad_year, r.course_name||r.course_code, r.grade].filter(Boolean).join(' · ');
-  dlg2('ลบ'+KNAME[kind], '<div class="ctx">'+esc(lab)+'</div><p style="margin-top:0">รายการนี้จะหายจากหน้าจอ'+(kind==='fu'?' ที่ประชุม และรายงาน PDF':'')+' แต่<b>กู้คืนได้</b>ที่ "รายการที่ลบแล้ว" ด้านล่างของแท็บนี้ · ระบบเก็บประวัติการลบ</p>'+
+  var lab = kind === 'mc' ? ['ประชุม '+thd(r.date||r.meeting_date), r.issue].filter(Boolean).join(' · ') : kind === 'fu' ? [thd(r.date), r.kind, r.issue].filter(Boolean).join(' · ') : kind === 'af' ? 'ปีการศึกษา '+r.acad_year+' · คะแนน '+r.score : [r.acad_year, r.course_name||r.course_code, r.grade].filter(Boolean).join(' · ');
+  dlg2('ลบ'+KNAME[kind], '<div class="ctx">'+esc(lab)+'</div><p style="margin-top:0">รายการนี้จะหายจากหน้าจอ'+(kind==='fu'?' ที่ประชุม และรายงาน PDF':kind==='mc'?' และการ์ดสรุป':'')+' แต่<b>กู้คืนได้</b>ที่ "รายการที่ลบแล้ว" ด้านล่างของแท็บนี้ · ระบบเก็บประวัติการลบ</p>'+
     fld('d2Text','หมายเหตุ (ถ้ามี)','<input id="d2Text" maxlength="300">'), 'ลบ', function(){
       return api('adm_delete', { kind:kind, key:key, ver:r.ver, studentId:CUR, reason:$('d2Text').value.trim(), reqId:req }).then(function(x){ B = x.bundle; renderPerson(); toast(x.message); })
         .catch(function(err){ if (err.code === 'CONFLICT'){ openStudent(CUR, true); } throw err; }); });
@@ -657,7 +708,7 @@ function restRec(kind, key, at){
 }
 function opts(list, v, blank){ return (blank?'<option value="">'+blank+'</option>':'') + list.map(function(x){ return '<option'+(x===v?' selected':'')+'>'+esc(x)+'</option>'; }).join(''); }
 function fld(id, label, inner){ return '<div class="fld"><label for="'+id+'">'+label+'</label>'+inner+'</div>'; }
-function openForm(kind, key){
+function openForm(kind, key, preset){
   var C = INIT.choices, p = B.profile, rec = null, h = '', title = '';
   if (kind === 'wr'){ rec = B.evals.filter(function(e){ return e.wr_id === key; })[0]; title = 'แก้ไขข้อมูลปัญหา';
     h = '<div class="ctx"><b>'+esc(p.name)+'</b> ('+esc(p.id)+')<br>'+esc(rec.department)+(rec.course?' · '+esc(rec.course):'')+'<br>สัปดาห์เริ่ม '+thd(rec.week_start)+' · ประเมินโดย '+esc(rec.evaluator_email)+' เมื่อ '+thd(rec.submitted_at)+
@@ -709,14 +760,26 @@ function openForm(kind, key){
       fld('f_actor','ผู้ดำเนินการ (ถ้ามี)','<input id="f_actor" name="actor" maxlength="200" value="'+v('actor')+'" placeholder="เช่น อ.ที่ปรึกษา">')+
       fld('f_due','วันนัดดูผล (ถ้ามี)','<input type="date" id="f_due" name="due" value="'+dv('due')+'">')+
       fld('f_result','ผลเมื่อถึงวันนัด','<select id="f_result" name="result">'+opts(C.fu_result||[], rec?rec.result:'', '— ยังไม่ถึง/ยังไม่บันทึก —')+'</select>')+'</div>'; }
+  if (kind === 'mc'){ rec = key ? (B.meetc||[]).filter(function(m){ return m.mc_id === key; })[0] : null; title = rec ? 'แก้ไขความเห็นที่ประชุม' : 'เพิ่มความเห็นที่ประชุม';
+    var mv = function(k){ return rec ? esc(rec[k]) : ''; }, st = (preset && preset.status) || (rec ? rec.status : 'ต้องติดตาม'), dn = st === 'จบแล้ว';
+    h = '<div class="ctx"><b>'+esc(p.name)+'</b> ('+esc(p.id)+')<br><span class="hint">1 ปัญหา = 1 ความเห็น · ระบบผูกกับรอบทบทวนให้เองถ้าวันที่ประชุมตรงกับรอบ · ห้ามใส่ข้อมูลสุขภาพ/การรักษา</span></div>'+
+      fld('f_meeting_date','วันที่ประชุม','<input type="date" id="f_meeting_date" name="meeting_date" value="'+(rec?esc(String(rec.meeting_date||'').slice(0,10)):INIT.today)+'">')+
+      fld('f_raised_by','ยกเรื่องโดย (พิมพ์อิสระ)','<input id="f_raised_by" name="raised_by" maxlength="300" value="'+mv('raised_by')+'" placeholder="เช่น อ.ภาคอายุรศาสตร์">')+
+      fld('f_issue','ประเด็น / feedback','<textarea id="f_issue" name="issue" maxlength="2000" placeholder="เช่น มาสายบ่อยช่วงขึ้น ward">'+mv('issue')+'</textarea>')+
+      fld('f_follow','สิ่งที่ต้องติดตามต่อ','<textarea id="f_follow" name="follow" maxlength="2000" placeholder="เช่น อ.ที่ปรึกษาคุยกับนักเรียน">'+mv('follow')+'</textarea>')+
+      '<div class="fld"><span class="lab">สถานะ</span><div class="tog" id="f_tog"><label class="o'+(dn?'':' on')+'"><input type="radio" name="status" value="ต้องติดตาม"'+(dn?'':' checked')+'> 🔴 ต้องติดตามปัญหา</label>'+
+        '<label class="c'+(dn?' on':'')+'"><input type="radio" name="status" value="จบแล้ว"'+(dn?' checked':'')+'> ✅ ปัญหาจบแล้ว</label></div></div>'+
+      fld('f_result','ผลที่ได้ <span class="hint">(กรอกตอนปิดเรื่อง ไม่บังคับ)</span>','<textarea id="f_result" name="result" maxlength="2000">'+mv('result')+'</textarea>'); }
   var isNew = !rec, rsSoft = kind === 'rs';
-  h += fld('f_reason', kind === 'fu' ? 'หมายเหตุ (ถ้ามี · เก็บในประวัติแก้ไข)' : isNew ? 'หมายเหตุการเพิ่ม (ถ้ามี)' : rsSoft ? 'เหตุผลการแก้ไข <span class="hint">(ไม่บังคับเมื่อกรอกครั้งแรก · บังคับเมื่อแก้ค่าที่บันทึกไว้แล้ว)</span>' : 'เหตุผลการแก้ไข <b style="color:var(--err)">*</b>', '<textarea id="f_reason" maxlength="500" placeholder="'+(kind==='fu'?'ไม่บังคับ':isNew?'เช่น ผลจากคณะกรรมการรายวิชา':'เช่น อาจารย์ผู้ประเมินแจ้งแก้ไขทางอีเมลวันที่ ...')+'"></textarea>')+
+  h += fld('f_reason', kind === 'fu' || kind === 'mc' ? 'หมายเหตุ (ถ้ามี · เก็บในประวัติแก้ไข)' : isNew ? 'หมายเหตุการเพิ่ม (ถ้ามี)' : rsSoft ? 'เหตุผลการแก้ไข <span class="hint">(ไม่บังคับเมื่อกรอกครั้งแรก · บังคับเมื่อแก้ค่าที่บันทึกไว้แล้ว)</span>' : 'เหตุผลการแก้ไข <b style="color:var(--err)">*</b>', '<textarea id="f_reason" maxlength="500" placeholder="'+(kind==='fu'?'ไม่บังคับ':isNew?'เช่น ผลจากคณะกรรมการรายวิชา':'เช่น อาจารย์ผู้ประเมินแจ้งแก้ไขทางอีเมลวันที่ ...')+'"></textarea>')+
     '<div class="msg err" id="f_msg" role="alert"></div>';
-  FORM = { kind:kind, key: rec ? (kind==='wr'?rec.wr_id:kind==='rs'?rec.rr_id:kind==='fu'?rec.fu_id:rec.key) : '', ver: rec ? rec.ver : '', rec: rec, reqId: rid(), busy:false };
+  FORM = { kind:kind, key: rec ? (kind==='wr'?rec.wr_id:kind==='rs'?rec.rr_id:kind==='fu'?rec.fu_id:kind==='mc'?rec.mc_id:rec.key) : '', ver: rec ? rec.ver : '', rec: rec, reqId: rid(), busy:false };
   $('dlgTitle').textContent = title; $('dlgBody').innerHTML = h; $('dlgSave').disabled = false; $('dlgSave').textContent = 'บันทึก';
   if ($('f_pick')) $('f_pick').onchange = function(){ var r = FORM_ROTS[+this.value]; if (!r) return;
     $('f_course_name').value = r.course.replace(/\s*·\s*กลุ่ม.*$/,''); $('f_department').value = r.dept; $('f_rot_start').value = r.start; $('f_rot_end').value = r.end; $('f_acad_year').value = acadYear(r.start); };
+  if ($('f_tog')) [].forEach.call($('f_tog').querySelectorAll('input'), function(x){ x.onchange = function(){ [].forEach.call($('f_tog').querySelectorAll('label'), function(l){ l.classList.toggle('on', l.querySelector('input').checked); }); }; });
   $('dlg').showModal();
+  if (preset && preset.status === 'จบแล้ว' && $('f_result')) $('f_result').focus();
 }
 var FORM_ROTS = [];
 $('dlgCancel').onclick = function(){ if (!FORM || !FORM.busy) $('dlg').close(); };
@@ -726,12 +789,13 @@ $('dlgForm').onsubmit = function(e){
   var f = {}, r = FORM.rec;
   [].forEach.call($('dlgBody').querySelectorAll('[name]'), function(x){
     if (x.type === 'checkbox'){ if (x.checked !== !!x.dataset.init) f[x.name] = x.checked ? 'ใช่' : 'ไม่ใช่'; return; }
+    if (x.type === 'radio' && !x.checked) return;
     var v = x.value.trim(), old = r ? String(r[x.name]==null?'':r[x.name]) : '';
     if (x.type === 'date') old = old.slice(0,10);
     if (!r || v !== old) f[x.name] = v; });
   var reason = $('f_reason').value.trim(), msg = $('f_msg');
   if (r && !Object.keys(f).length){ msg.textContent = 'ยังไม่มีการเปลี่ยนแปลง'; return; }
-  var needR = FORM.kind === 'fu' ? false : FORM.kind !== 'rs' ? true : !sameSession(r) && Object.keys(f).some(function(k){ return k !== 'follow_next' && String(r[k]==null?'':r[k]) !== ''; });
+  var needR = FORM.kind === 'fu' || FORM.kind === 'mc' ? false : FORM.kind !== 'rs' ? true : !sameSession(r) && Object.keys(f).some(function(k){ return k !== 'follow_next' && String(r[k]==null?'':r[k]) !== ''; });
   if (r && needR && reason.length < 3){ msg.textContent = 'กรุณาระบุเหตุผลการแก้ไข (แก้ค่าที่บันทึกไว้แล้ว)'; $('f_reason').focus(); return; }
   if (FORM.kind === 'af' && f.score !== undefined && f.score !== '' && (+f.score < 0 || +f.score > 100)){ msg.textContent = 'คะแนนต้องอยู่ระหว่าง 0–100'; return; }
   FORM.busy = true; $('dlgSave').disabled = true; $('dlgSave').textContent = 'กำลังบันทึก...'; msg.textContent = '';
