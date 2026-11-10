@@ -312,7 +312,7 @@ function start(){
     $('who').textContent = d.email + ' · ข้อมูล ณ ' + thd(d.today);
     $('fStatus').innerHTML = '<option value="">ทุกสถานะ</option>' + d.statuses.map(function(s){ return '<option'+(s==='กำลังศึกษา'?' selected':'')+'>'+esc(s)+'</option>'; }).join('');
     $('fYear').innerHTML = '<option value="">ทุกชั้นปี</option>' + d.years.map(function(y){ return '<option value="'+esc(y)+'">ปี '+esc(y)+'</option>'; }).join('');
-    $('cYear').innerHTML = d.years.map(function(y){ return '<option value="'+esc(y)+'"'+(y==='5'?' selected':'')+'>ปี '+esc(y)+'</option>'; }).join('');
+    $('cYear').innerHTML = d.years.map(function(y){ return '<option value="'+esc(y)+'"'+(y==='5'?' selected':'')+'>ปี '+esc(y)+'</option>'; }).join('')+'<option value="all">ทุกชั้นปี (ติดตามใกล้ชิด)</option>';
     var ay = acadYear(d.today), y0 = (+ay-543)+'-04-01'; $('tFrom').value = y0 > d.today ? (+ay-544)+'-04-01' : y0; $('tTo').value = d.today;
     search();
   }).catch(function(e){ if (relogin(e, start)) return; $('login').classList.remove('hidden'); $('loginMsg').textContent = e.message; });
@@ -829,7 +829,9 @@ window.addEventListener('pagehide', function(){ psyLock(true); });
 var OV = null, OVS = { view:'follow', sort:'ratio', q:'', st:'', min:1, dmin:'', per:'ay', from:'', to:'', grp:'', exp:{} };
 try { var _ovs = JSON.parse(localStorage.getItem('ovs') || '{}'); if (_ovs.view) OVS.view = _ovs.view; if (_ovs.sort) OVS.sort = _ovs.sort; } catch(_){}
 function ovSave(){ try { localStorage.setItem('ovs', JSON.stringify({ view:OVS.view, sort:OVS.sort })); } catch(_){} }
-$('cYear').onchange = function(){ $('cAy').value = ''; if (MEET.on){ LOADED.cohort = false; loadMeeting(); } else loadCohort(); };
+function yearUI(){ var all = $('cYear').value === 'all'; if (all && MEET.on){ MEET.on = false; setMeetUI(); }
+  $('cPrep').classList.toggle('hidden', all); $('cMeet').classList.toggle('hidden', all); if (!MEET.on) $('cAyL').classList.toggle('hidden', all); }
+$('cYear').onchange = function(){ $('cAy').value = ''; yearUI(); if (MEET.on){ LOADED.cohort = false; loadMeeting(); } else loadCohort(); };
 $('cAy').onchange = loadCohort;
 function loadCohort(){
   LOADED.cohort = true; $('cohortBody').innerHTML = '<div class="panel empty">กำลังโหลด...</div>';
@@ -859,6 +861,8 @@ function sbar(c){ var t = 0; STAT.forEach(function(s){ t += c[s]; }); if (!t) re
   return '<div class="bar" title="'+esc(STAT.filter(function(s){ return c[s]; }).map(function(s){ return s+' '+c[s]; }).join(' · '))+'">'+STAT.filter(function(s){ return c[s]; }).map(function(s){ return '<span style="flex:'+c[s]+';'+sw(s)+'"></span>'; }).join('')+'</div>'; }
 function renderCohort(){
   var d = OV; if (!d) return;
+  if (d.year === 'all') return renderFollowAll();
+  if (OVS.sort === 'year') OVS.sort = 'ratio';
   var ys = +d.year, rows = ovStats(), fol = d.follow, nTick = d.students.filter(function(s){ return fol[s.id] && fol[s.id].active; }).length;
   $('cNote').textContent = 'ข้อมูล ณ ' + thd(d.today).replace(/<[^>]+>/g,'') + (d.ay !== d.curAY ? ' · ดูย้อนหลังปีการศึกษา '+d.ay+' (นับตามชั้นปี ณ ตอนประเมิน)' : '');
   var grps = {}; d.students.forEach(function(s){ if (s.group) grps[s.group] = 1; });
@@ -896,8 +900,25 @@ function renderCohort(){
   $('fclear').onclick = function(){ OVS.q=''; OVS.st=''; OVS.min=1; OVS.dmin=''; OVS.per='ay'; OVS.from=''; OVS.to=''; OVS.grp=''; renderCohort(); };
   ovRows(); rotChart(); deptTable(); roundTable();
 }
+function renderFollowAll(){
+  var d = OV, fol = d.follow, nTick = d.students.filter(function(s){ return fol[s.id] && fol[s.id].active; }).length, by = {};
+  d.students.forEach(function(s){ if (fol[s.id] && fol[s.id].active) by[s.year] = (by[s.year]||0) + 1; });
+  if (OVS.sort !== 'name' && OVS.sort !== 'ratio' && OVS.sort !== 'year') OVS.sort = 'year';
+  $('cNote').textContent = 'ข้อมูล ณ ' + thd(d.today).replace(/<[^>]+>/g,'') + ' · ตัวเลขผลประเมินนับในปีการศึกษา '+d.ay;
+  $('cohortBody').innerHTML =
+    '<div class="ovtiles"><div class="tile hi"><div class="n">'+nTick+' <span class="u">คน</span></div><div class="q">ติดตามใกล้ชิด ทุกชั้นปี</div></div>'+
+      '<div class="tile"><div class="n" style="font-size:18px;line-height:1.6">'+(Object.keys(by).sort().map(function(y){ return 'ปี '+esc(y)+': <b>'+by[y]+'</b>'; }).join(' · ')||'—')+'</div><div class="q">แยกตามชั้นปี</div></div></div>'+
+    '<div class="panel"><div class="ovhead"><h3 id="ovTitle"></h3><div class="seg2"><span class="hint">เรียงตาม</span>'+
+      '<button class="sm" data-sort="year" aria-pressed="'+(OVS.sort==='year')+'">ชั้นปี</button><button class="sm" data-sort="name" aria-pressed="'+(OVS.sort==='name')+'">ชื่อ ก–ฮ</button><button class="sm" data-sort="ratio" aria-pressed="'+(OVS.sort==='ratio')+'">อัตราข้อกังวล มาก→น้อย</button></div></div>'+
+      '<div class="hidden" id="ovFilt"></div>'+
+      '<div class="tablewrap"><table class="ovt"><thead><tr><th>ติดตาม</th><th>นักเรียน</th><th class="num"><i class="sw" style="'+sw('ติดตาม')+'"></i>ติดตาม</th><th class="num"><i class="sw" style="'+sw('เฝ้าระวัง')+'"></i>เฝ้าระวัง</th><th class="num"><i class="sw" style="'+sw('ไม่จบรายวิชา')+'"></i>ไม่จบรายวิชา</th>'+
+        '<th style="min-width:170px">สัดส่วนผลประเมิน</th><th>วันนัดติดตาม</th><th>ผู้รับผิดชอบ</th><th style="min-width:200px">ความเห็นเพิ่มเติม</th></tr></thead><tbody id="ovRows"></tbody></table></div>'+
+      '<div class="note">รวมทุกชั้นปีในหน้าเดียว · x/n = จำนวนครั้ง ÷ ผลประเมินที่ประเมินได้ ในปีการศึกษา '+esc(d.ay)+' · เอาติ๊กออกเพื่อเลิกติดตาม · เพิ่มคนใหม่ได้จากแท็บรายบุคคล หรือเลือกชั้นปีแล้วกด "ทุกคนในชั้นปี"</div></div>';
+  [].forEach.call(document.querySelectorAll('[data-sort]'), function(b){ b.onclick = function(){ OVS.sort = b.dataset.sort; ovSave(); renderCohort(); }; });
+  ovRows();
+}
 function ovRows(){
-  var d = OV, all = ovStats(), fol = d.follow, isAll = OVS.view === 'all';
+  var d = OV, all = ovStats(), fol = d.follow, isAll = OVS.view === 'all' && d.year !== 'all';
   var q = OVS.q.trim().toLowerCase(), st = OVS.st, mn = OVS.min, dm = +OVS.dmin || 0;
   var match = function(e){ return st==='ข้อกังวลใดก็ได้' ? CONCERN[e.status] : e.status === st; };
   var rows = all.filter(function(x){
@@ -908,15 +929,16 @@ function ovRows(){
     if (st){ var hit = x.ev.filter(match), dp = {}; hit.forEach(function(e){ dp[e.dept] = 1; });
       if (hit.length < mn || Object.keys(dp).length < dm) return false; }
     return true; });
-  rows.sort(function(a,b){ return OVS.sort === 'name' ? a.s.name.localeCompare(b.s.name,'th') : (b.ratio - a.ratio) || a.s.name.localeCompare(b.s.name,'th'); });
+  rows.sort(function(a,b){ return OVS.sort === 'name' ? a.s.name.localeCompare(b.s.name,'th') : OVS.sort === 'year' ? (String(a.s.year).localeCompare(String(b.s.year))) || a.s.name.localeCompare(b.s.name,'th') : (b.ratio - a.ratio) || a.s.name.localeCompare(b.s.name,'th'); });
   var nT = all.filter(function(x){ return fol[x.s.id] && fol[x.s.id].active; }).length;
-  $('ovTitle').textContent = isAll ? 'นักเรียนทุกคนในชั้นปี (แสดง '+rows.length+' จาก '+all.length+' คน)' : 'นักเรียนที่ติดตามใกล้ชิด ('+nT+' คน)';
+  if (d.year === 'all') isAll = false;
+  $('ovTitle').textContent = d.year === 'all' ? 'นักเรียนที่ติดตามใกล้ชิด ทุกชั้นปี ('+nT+' คน)' : isAll ? 'นักเรียนทุกคนในชั้นปี (แสดง '+rows.length+' จาก '+all.length+' คน)' : 'นักเรียนที่ติดตามใกล้ชิด ('+nT+' คน)';
   $('ovFilt').classList.toggle('hidden', !isAll);
   var notes = d.notes, plans = d.plans;
   $('ovRows').innerHTML = rows.length ? rows.map(function(x){
     var s = x.s, f = fol[s.id], on = !!(f && f.active), nt = notes[s.id], dash = '<span class="hint">—</span>';
     return '<tr data-id="'+esc(s.id)+'"><td><input type="checkbox" class="tick" aria-label="ติดตามใกล้ชิด '+esc(s.name)+'"'+(on?' checked':'')+'></td>'+
-      '<td class="nm"><a class="lnk" data-open="'+esc(s.id)+'">'+esc(s.name)+'</a><div class="hint">'+esc(s.id)+(s.group?' · กลุ่ม '+esc(s.group):'')+'</div>'+
+      '<td class="nm"><a class="lnk" data-open="'+esc(s.id)+'">'+esc(s.name)+'</a><div class="hint">'+esc(s.id)+(s.year?' · <b>ปี '+esc(s.year)+'</b>':'')+(s.group?' · กลุ่ม '+esc(s.group):'')+'</div>'+
         (s.repeat?'<span class="pill warn" title="เคยเรียนชั้นปีนี้ในปีการศึกษา '+esc(s.repeat)+'">ซ้ำชั้น</span> ':'')+(s.status!=='กำลังศึกษา'?'<span class="pill">'+esc(s.status)+'</span>':'')+'</td>'+
       '<td class="num">'+frac(x.c['ติดตาม'],x.n)+'</td><td class="num">'+frac(x.c['เฝ้าระวัง'],x.n)+'</td><td class="num">'+frac(x.c['ไม่จบรายวิชา'],x.n)+'</td>'+
       '<td>'+sbar(x.c)+'<div class="hint" style="margin-top:4px">'+(x.n?'ข้อกังวลรวม '+Math.round(x.ratio*100)+'%':'ยังไม่มีผลที่ประเมินได้')+(x.c[NA]?' · ประเมินไม่ได้ '+x.c[NA]:'')+'</div></td>'+
@@ -1046,7 +1068,7 @@ function setMeetUI(){
   $('meetBody').classList.toggle('hidden', !MEET.on); $('cohortBody').classList.toggle('hidden', MEET.on);
   $('cAyL').classList.toggle('hidden', MEET.on); $('cNote').classList.toggle('hidden', MEET.on);
 }
-$('cMeet').onclick = function(){ MEET.on = !MEET.on; setMeetUI(); if (MEET.on) loadMeeting(); else if (!LOADED.cohort || !OV || OV.year !== $('cYear').value) loadCohort(); };
+$('cMeet').onclick = function(){ if ($('cYear').value === 'all') return; MEET.on = !MEET.on; setMeetUI(); if (MEET.on) loadMeeting(); else if (!LOADED.cohort || !OV || OV.year !== $('cYear').value) loadCohort(); };
 function loadMeeting(roundId){
   $('meetBody').innerHTML = '<div class="panel empty">กำลังโหลด...</div>';
   api('adm_meeting', { year: $('cYear').value, round: roundId || '' }).then(function(d){ MEET.d = d; MEET.qs = {}; renderMeeting(); })
