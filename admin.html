@@ -48,6 +48,12 @@ nav.tabs button[aria-selected=true]{color:var(--ink);font-weight:600;border-bott
 .tiles{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;margin-top:12px}
 @media(max-width:900px){.tiles{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:520px){.tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.scards{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px;margin:0 0 10px}
+.scard{display:flex;flex-direction:column;justify-content:flex-start;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px;color:var(--ink);cursor:pointer;font:inherit}
+.scard:hover{border-color:var(--brand2)}.scard[aria-current=true]{border-color:var(--brand2);box-shadow:inset 0 0 0 1px var(--brand2)}
+.scard .t{font-size:12px;color:var(--muted);font-weight:600;display:flex;justify-content:space-between;gap:6px}.scard .t span{font-weight:400}
+.scard .v{margin-top:4px;font-size:14px;line-height:1.45;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
+.scard.none{background:var(--soft);border-style:dashed}.scard.none .v{color:var(--muted)}
 .tile{background:var(--soft);border-radius:8px;padding:8px 10px}.tile .n{font-size:22px;font-weight:700;line-height:1.2}.tile .q{font-size:12px;color:var(--muted)}.tile .u{font-size:12px;color:var(--muted);font-weight:400}
 .tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--card)}
 table{border-collapse:collapse;width:100%;min-width:720px}
@@ -272,7 +278,7 @@ function norm(s){ s = String(s==null?'':s).trim(); return s === 'ปกติ' ?
 function sw(s){ return 'background:'+COLOR[s]+(s===NA?';box-shadow:inset 0 0 0 1px var(--s5line)':''); }   /* สีดำมีขอบเทา เห็นได้ในโหมดมืด */
 function rated(list){ return list.filter(function(e){ return norm(e.status) !== NA; }); }   /* ตัวหารอัตราข้อกังวล */
 var $ = function(id){ return document.getElementById(id); };
-var idToken = '', INIT = null, B = null, CUR = '', SUB = 'eval', SHOWREPL = false, pending = null;
+var idToken = '', INIT = null, B = null, CUR = '', SUB0 = '', SUB = SUB0, SHOWREPL = false, pending = null;
 var PSY = { token:'', sid:'', timer:null, last:0, data:null };
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
 var TH = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
@@ -350,7 +356,7 @@ function search(){
 function openStudent(id, keepSub){
   if (id !== CUR) psyLock();
   if (id !== CUR && !keepSub) SELAY = null;   /* นักเรียนใหม่ -> เริ่มที่ปีการศึกษาปัจจุบัน */
-  CUR = id; if (!keepSub) { SUB = 'eval'; SHOWREPL = false; }
+  CUR = id; if (!keepSub) { SUB = SUB0; SHOWREPL = false; }
   [].forEach.call(document.querySelectorAll('#results button'), function(b){ b.setAttribute('aria-current', String(b.dataset.id === id)); });
   $('personEmpty').classList.remove('hidden'); $('personEmpty').textContent = 'กำลังโหลดประวัติ...'; $('personBody').classList.add('hidden');
   api('adm_student', { id:id }).then(function(b){ if (CUR !== id) return; B = b; renderPerson();
@@ -414,6 +420,7 @@ function renderPerson(){
       '<div class="hint" style="margin-bottom:6px">1 แถว = 1 ปีการศึกษา · 1 ช่อง = 1 rotation/รายวิชา (กว้างตามจำนวนสัปดาห์) · 1 ก้อนสี = ผลประเมิน 1 ครั้ง · เส้นฟ้า = วันนี้ · กรอบเส้นประ = ยังไม่ถึง</div>'+
       '<div class="legend">'+STAT.map(function(s){ return '<span><i style="'+sw(s)+'"></i>'+s+'</span>'; }).join('')+'<span><i class="emp"></i>ยังไม่มีผลประเมิน</span></div>'+
       '<div class="rotwrap"><div class="ptlin" id="pTl">'+pTimeline(YS)+'</div></div></div>'+
+    sumCards()+
     '<div class="sub" role="tablist">'+subs.map(function(s){ return '<button role="tab" data-s="'+s[0]+'" aria-selected="'+(SUB===s[0])+'">'+s[1]+'</button>'; }).join('')+'</div>'+
     '<div id="subBody"></div>';
   $('personEmpty').classList.add('hidden'); $('personBody').classList.remove('hidden');
@@ -427,7 +434,9 @@ function renderPerson(){
     setHandled(id, v, '').then(function(esc2){ if (B && B.profile.id === id){ B.escalation = esc2; renderPerson(); } })
       .catch(function(){ cb.checked = !v; cb.disabled = false; }); };
   [].forEach.call(document.querySelectorAll('.sub button'), function(b){ b.onclick = function(){ if (SUB === 'psy' && b.dataset.s !== 'psy') psyLock(); SUB = b.dataset.s;
-    [].forEach.call(document.querySelectorAll('.sub button'), function(x){ x.setAttribute('aria-selected', String(x === b)); }); renderSub(); }; });
+    [].forEach.call(document.querySelectorAll('.sub button'), function(x){ x.setAttribute('aria-selected', String(x === b)); }); [].forEach.call(document.querySelectorAll('#personBody [data-sc]'), function(x){ x.setAttribute('aria-current', String(x.dataset.sc === b.dataset.s)); }); renderSub(); }; });
+  [].forEach.call(document.querySelectorAll('#personBody [data-sc]'), function(c){ c.onclick = function(){ var b = document.querySelector('.sub button[data-s="'+c.dataset.sc+'"]'); if (!b) return; b.click();
+    [].forEach.call(document.querySelectorAll('#personBody [data-sc]'), function(x){ x.setAttribute('aria-current', String(x === c)); }); b.scrollIntoView({ block:'start', behavior:'smooth' }); }; });
   renderSub();
 }
 function pCompare(YS){
@@ -517,8 +526,27 @@ function trendChart(el, ev){
   });
 }
 function nosrc(name, how){ return '<div class="nosrc"><b>ยังไม่มีแหล่งข้อมูล</b> — แท็บ "'+esc(name)+'" ยังไม่ถูกสร้างใน DB_MAIN'+(how?'<br>'+how:'')+'</div>'; }
+// 10 พ.ย. 69: การ์ดสรุปข้อมูลล่าสุดของแต่ละแท็บย่อย (ไม่รวมประวัติแก้ไข · ข้อมูลลับไม่แสดงเนื้อหา)
+function sumCards(){
+  var cut = function(t, n){ t = String(t||'').replace(/\s+/g,' ').trim(); return t.length > n ? t.slice(0, n)+'…' : t; };
+  var card = function(k, title, when, html){ return '<button type="button" class="scard'+(html?'':' none')+'" data-sc="'+k+'" aria-current="'+(SUB===k)+'"><div class="t">'+title+(when?'<span>'+when+'</span>':'')+'</div><div class="v">'+(html||'ยังไม่มีข้อมูล')+'</div></button>'; };
+  var ev = (B.evals||[]).filter(function(e){ return !e.replaced; }).slice().sort(function(a,b){ return String(b.week_start).localeCompare(String(a.week_start)) || String(b.submitted_at).localeCompare(String(a.submitted_at)); })[0];
+  var rv = (B.reviews||[])[0], fu = (B.followups||[])[0];
+  var af = (B.affective||[]).slice().sort(function(a,b){ return a.acad_year < b.acad_year ? 1 : -1; })[0];
+  var gr = (B.grades||[]).slice().sort(function(a,b){ return (b.acad_year+b.semester+b.rot_start) < (a.acad_year+a.semester+a.rot_start) ? -1 : 1; })[0];
+  var psyOn = PSY && PSY.token && PSY.sid === B.profile.id;
+  return '<div class="scards" aria-label="สรุปข้อมูลล่าสุด">'+
+    card('eval', 'ผลประเมินล่าสุด', ev ? thd(ev.week_start) : '', ev ? stat(ev.status)+' '+esc(short(ev.department))+(ev.comment?'<div class="hint">'+esc(cut(ev.comment, 80))+'</div>':'') : '')+
+    card('rev', 'ทบทวน/แผนดูแล', rv ? esc(rv.round_id) : '', rv ? esc(rv.decision ? cut(rv.decision, 70) : (rv.priority || 'ยังไม่บันทึกมติ'))+(rv.next_check?'<div class="hint">นัด '+thd(rv.next_check)+(rv.plan_owner?' · '+esc(cut(rv.plan_owner, 30)):'')+'</div>':'') : '')+
+    card('fu', 'บันทึกติดตามล่าสุด', fu ? thd(fu.date) : '', fu ? esc(cut(fu.issue || fu.kind || '', 90))+(fu.due && !fu.result?'<div class="hint">นัดดูผล '+thd(fu.due)+'</div>':'') : '')+
+    card('af', 'จิตพิสัย', af ? 'ปี '+esc(af.acad_year) : '', af ? (af.score===''||af.score==null ? '<span class="hint">ยังไม่กรอกคะแนน</span>' : '<b>'+esc(af.score)+'</b>/100')+(af.note?'<div class="hint">'+esc(cut(af.note, 60))+'</div>':'') : '')+
+    card('gr', 'ผลการเรียนล่าสุด', gr ? esc(gr.acad_year)+(gr.semester?'/'+esc(gr.semester):'') : '', gr ? esc(cut(gr.course_name||gr.course_code, 50))+' · เกรด <b>'+dash(gr.grade)+'</b>' : '')+
+    '<button type="button" class="scard none" data-sc="psy" aria-current="'+(SUB==='psy')+'"><div class="t">🔒 ข้อมูลลับ</div><div class="v">'+(psyOn ? 'ปลดล็อกอยู่ · กดเพื่อดู' : 'ต้องใส่ PIN เพื่อดู')+'</div></button>'+
+    '</div>';
+}
 function renderSub(){
   var el = $('subBody'), s = SUB;
+  if (!s){ el.innerHTML = '<div class="panel empty">กดการ์ดหรือแท็บด้านบนเพื่อดูรายละเอียด แก้ไข หรือดูประวัติเก่า</div>'; return; }
   if (s === 'eval') return renderEvals(el);
   if (s === 'rev') return renderReviews(el);
   if (s === 'fu') return renderFU(el);
