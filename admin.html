@@ -247,7 +247,7 @@ details.cm summary{cursor:pointer;color:var(--brand2);font-size:13px;margin-top:
   </section>
 
   <section id="v-cohort" class="hidden">
-    <div class="filters"><label>ชั้นปี <select id="cYear"></select></label><label id="cAyL">ปีการศึกษา <select id="cAy"><option value="">ปัจจุบัน</option></select></label><span class="hint" id="cNote"></span>
+    <div class="filters"><label>ชั้นปี <select id="cYear"></select></label><label id="cAyL">ปีการศึกษา <select id="cAy"><option value="">ปัจจุบัน</option></select></label><span class="hint" id="cNote"></span><span class="hint" id="cSync" aria-live="polite"></span>
       <span class="cbtns"><button class="sm" id="cPrep" type="button">+ เตรียมข้อมูลรอบ…</button><button class="sm pri" id="cMeet" type="button" aria-pressed="false">🗓 โหมดประชุม</button></span></div>
     <div id="meetBody" class="hidden"></div>
     <div id="cohortBody"><div class="panel empty">กำลังโหลด...</div></div>
@@ -923,15 +923,40 @@ try { var _ovs = JSON.parse(localStorage.getItem('ovs') || '{}'); if (_ovs.view)
 function ovSave(){ try { localStorage.setItem('ovs', JSON.stringify({ view:OVS.view, sort:OVS.sort })); } catch(_){} }
 function yearUI(){ var all = $('cYear').value === 'all'; if (all && MEET.on){ MEET.on = false; setMeetUI(); }
   $('cPrep').classList.toggle('hidden', all); $('cMeet').classList.toggle('hidden', all); if (!MEET.on) $('cAyL').classList.toggle('hidden', all); }
-$('cYear').onchange = function(){ $('cAy').value = ''; yearUI(); if (MEET.on){ LOADED.cohort = false; loadMeeting(); } else loadCohort(); };
+$('cYear').onchange = function(){ $('cAy').value = ''; yearUI(); if (MEET.on){ LOADED.cohort = false; OVC = {}; loadMeeting(); } else loadCohort(); };
 $('cAy').onchange = loadCohort;
+// 12 พ.ย. 69: จำข้อมูลภาพรวมที่เคยเปิด (แสดงทันที แล้วดึงข้อมูลล่าสุดมาแทน) + โหลดชั้นปีอื่นล่วงหน้า
+var OVC = {}, OVSEQ = 0, OVPF = 0;
+function ovKey(y, ay){ return y + '|' + (ay || ''); }
+function ovApply(d){
+  OV = d; OVS.per = 'ay'; OVS.from = ''; OVS.to = ''; OVS.grp = ''; OVS.exp = {};
+  $('cAy').innerHTML = d.ays.map(function(a){ return '<option value="'+a+'"'+(a===d.ay?' selected':'')+'>'+a+(a===d.curAY?' (ปัจจุบัน)':'')+'</option>'; }).join('');
+  renderCohort();
+}
+function ovBusy(){ var a = document.activeElement; return ($('dlg2') && $('dlg2').open) || !!(a && $('cohortBody').contains(a) && /INPUT|TEXTAREA|SELECT/.test(a.tagName)); }
 function loadCohort(){
-  LOADED.cohort = true; $('cohortBody').innerHTML = '<div class="panel empty">กำลังโหลด...</div>';
-  api('adm_overview', { year: $('cYear').value, ay: $('cAy').value }).then(function(d){
-    OV = d; OVS.per = 'ay'; OVS.from = ''; OVS.to = ''; OVS.grp = ''; OVS.exp = {};
-    $('cAy').innerHTML = d.ays.map(function(a){ return '<option value="'+a+'"'+(a===d.ay?' selected':'')+'>'+a+(a===d.curAY?' (ปัจจุบัน)':'')+'</option>'; }).join('');
-    renderCohort();
-  }).catch(function(e){ if (relogin(e, loadCohort)) return; $('cohortBody').innerHTML = '<div class="panel empty">'+esc(e.message)+'</div>'; });
+  LOADED.cohort = true;
+  var y = $('cYear').value, ay = $('cAy').value, k = ovKey(y, ay), seq = ++OVSEQ, hit = OVC[k];
+  if (hit){ ovApply(hit); $('cSync').textContent = ' · กำลังอัปเดตข้อมูลล่าสุด…'; }
+  else { $('cSync').textContent = ''; $('cohortBody').innerHTML = '<div class="panel empty">กำลังโหลด...</div>'; }
+  api('adm_overview', { year: y, ay: ay }).then(function(d){
+    OVC[k] = d; if (!ay) OVC[ovKey(y, d.ay)] = d;
+    if (seq !== OVSEQ) return;
+    $('cSync').textContent = '';
+    if (hit && ovBusy()) { (function wait(){ if (seq !== OVSEQ) return; if (ovBusy()) return setTimeout(wait, 1500); if (OV === hit) ovApply(d); })(); }
+    else ovApply(d);
+    ovPrefetch();
+  }).catch(function(e){ if (seq !== OVSEQ) return; $('cSync').textContent = ''; if (relogin(e, loadCohort)) return;
+    if (hit) { toast('อัปเดตข้อมูลล่าสุดไม่สำเร็จ: '+e.message); return; } $('cohortBody').innerHTML = '<div class="panel empty">'+esc(e.message)+'</div>'; });
+}
+function ovPrefetch(){
+  if (OVPF) return; OVPF = 1;
+  var todo = [].map.call($('cYear').options, function(o){ return o.value; }).filter(function(v){ return !OVC[ovKey(v, '')]; });
+  (function next(){
+    var v = todo.shift(); if (v === undefined) { OVPF = 0; return; }
+    if (OVC[ovKey(v, '')]) return next();
+    api('adm_overview', { year: v, ay: '' }).then(function(d){ if (!OVC[ovKey(v, '')]) { OVC[ovKey(v, '')] = d; OVC[ovKey(v, d.ay)] = d; } next(); }).catch(function(){ OVPF = 0; });
+  })();
 }
 function shortD(d){ return short(d).replace(/^หน่วย/,''); }
 function ovPeriod(){
@@ -1323,7 +1348,7 @@ function prepSave(){
   if (!q.meeting && !PREP.ex) return Promise.reject(new Error('กรุณาระบุวันประชุม (ใช้สร้างรหัสรอบ)'));
   $('d2Save').textContent = 'กำลังเตรียมข้อมูล...';
   return api('adm_round_prepare', q).then(function(r){
-    toast('เตรียมข้อมูลรอบ '+r.id+' แล้ว'); MEET.msg = r.message; LOADED.cohort = false;
+    toast('เตรียมข้อมูลรอบ '+r.id+' แล้ว'); MEET.msg = r.message; LOADED.cohort = false; OVC = {};
     if ($('cYear').querySelector('option[value="'+q.year+'"]')) $('cYear').value = q.year;
     MEET.on = true; MEET.f = 'ต้องพิจารณา'; setMeetUI(); loadMeeting(r.id);
   }).catch(function(e){ $('d2Save').textContent = 'เตรียมข้อมูลรอบ'; throw e; });
@@ -1337,7 +1362,7 @@ function openClose(){
     '<p class="hint" style="margin-top:0">เมื่อปิดรอบ: ข้อกังวลในช่วงนี้ของนักเรียนที่มีมติแล้ว จะเปลี่ยนเป็น "ทบทวนแล้ว" และรอบนี้จะถูกล็อก 🔒 แก้ไขไม่ได้ (ถ้าต้องการแก้ภายหลัง กดปุ่ม "เปิดรอบกลับ" ได้)</p>'+
     fld('d2Text','พิมพ์รหัสรอบเพื่อยืนยัน','<input id="d2Text" autocomplete="off" placeholder="'+esc(r.id)+'">'), 'ปิดรอบ', function(){
       var t = $('d2Text').value.trim(); if (t !== r.id) return Promise.reject(new Error('พิมพ์รหัสรอบให้ตรง: '+r.id));
-      return api('adm_round_close', { id:r.id, confirm:t, reqId: rid() }).then(function(x){ toast(x.message); LOADED.cohort = false; loadMeeting(r.id); }); });
+      return api('adm_round_close', { id:r.id, confirm:t, reqId: rid() }).then(function(x){ toast(x.message); LOADED.cohort = false; OVC = {}; loadMeeting(r.id); }); });
   $('d2Save').className = 'danger';
 }
 function openReopen(){
@@ -1346,14 +1371,14 @@ function openReopen(){
     '<div class="ctx">รอบที่ '+esc(r.rn||r.round)+' · ชั้นปี '+esc(r.year)+' · ประชุม '+(r.meeting?thd(r.meeting):'—')+'</div>'+
     '<p style="margin-top:0">รอบนี้จะกลับมาแก้ไขมติ/แผนได้ตามปกติ และผลประเมินที่ถูกเปลี่ยนเป็น "ทบทวนแล้ว" ตอนปิดรอบ จะกลับเป็น "รอทบทวน"</p>'+
     '<p class="hint">มติที่กรอกไว้ไม่หาย · ระบบเก็บประวัติการเปิดรอบกลับไว้ · แก้เสร็จแล้วกด "ปิดรอบ" ใหม่ได้</p>', 'เปิดรอบกลับ', function(){
-      return api('adm_round_reopen', { id:r.id, reqId: rid() }).then(function(x){ toast(x.message); LOADED.cohort = false; loadMeeting(r.id); }); });
+      return api('adm_round_reopen', { id:r.id, reqId: rid() }).then(function(x){ toast(x.message); LOADED.cohort = false; OVC = {}; loadMeeting(r.id); }); });
 }
 /* ---------- ข้อสรุปที่ประชุม + สรุปผลการประชุมเป็น PDF ---------- */
 function openMeetNote(){
   var r = MEET.d.round;
   dlg2('ข้อสรุปของที่ประชุม · '+r.id, '<div class="ctx">รอบที่ '+esc(r.rn||r.round)+' · ประชุม '+(r.meeting?thd(r.meeting):'—')+'<br><span class="hint">ข้อความนี้จะอยู่ในสรุป PDF และแสดงเป็น "ข้อแนะนำจากการประชุมครั้งก่อน" ในรอบถัดไป</span></div>'+
     fld('d2Text','ข้อสรุป / ข้อแนะนำของที่ประชุม (ห้ามใส่ข้อมูลสุขภาพ/การวินิจฉัย)','<textarea id="d2Text" maxlength="2000" style="min-height:160px">'+esc(r.conclusion||'')+'</textarea>'), 'บันทึก', function(){
-    return api('adm_round_note', { round:r.id, text:$('d2Text').value, reqId: rid() }).then(function(x){ r.conclusion = x.conclusion; LOADED.cohort = false; toast(x.message); renderMeeting(); }); });
+    return api('adm_round_note', { round:r.id, text:$('d2Text').value, reqId: rid() }).then(function(x){ r.conclusion = x.conclusion; LOADED.cohort = false; OVC = {}; toast(x.message); renderMeeting(); }); });
 }
 function openSummary(){
   var r = MEET.d.round;
