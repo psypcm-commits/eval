@@ -1419,12 +1419,31 @@ $('d2Cancel').onclick = function(){ if (!D2 || !D2.busy) $('dlg2').close(); };
 $('dlg2').addEventListener('cancel', function(e){ if (D2 && D2.busy) e.preventDefault(); });
 $('d2Form').onsubmit = function(e){ e.preventDefault(); if (!D2 || D2.busy) return; D2.busy = true; $('d2Save').disabled = true; $('d2Msg').textContent = '';
   D2.save().then(function(){ D2.busy = false; $('dlg2').close(); }).catch(function(err){ D2.busy = false; $('d2Save').disabled = false; if (relogin(err, function(){})) { $('dlg2').close(); return; } $('d2Msg').textContent = 'ยังไม่ได้บันทึก: '+err.message; }); };
+function noteSync(id, n){ OV.notes[id] = n.length ? { n:n.length, latest:{ at:n[0].at, by:n[0].by, text:n[0].text.slice(0,160) } } : null; ovRows(); }
+function notesList(id, notes){
+  var L = $('d2List'); if (!L) return; L.className = '';
+  L.innerHTML = notes.length ? '<div class="nlist">'+notes.map(function(n){ return '<div class="card" data-nid="'+esc(n.id)+'"><div class="hint" style="display:flex;justify-content:space-between;gap:8px;align-items:center"><span>'+thd(n.at)+' · '+esc(n.by)+'</span>'+
+      (n.id ? '<span><button type="button" class="sm" data-ne="'+esc(n.id)+'">แก้ไข</button> <button type="button" class="sm" data-nd="'+esc(n.id)+'">ลบ</button></span>' : '')+'</div><div class="cmt">'+esc(n.text)+'</div></div>'; }).join('')+'</div>' : '<div class="hint">ยังไม่มีความเห็น</div>';
+  var call = function(q, btn){ btn.disabled = true; return api('adm_note_edit', Object.assign({ id:id }, q)).then(function(r){ toast(r.message); noteSync(id, r.notes); notesList(id, r.notes); })
+      .catch(function(e){ btn.disabled = false; if (relogin(e, function(){})) return; $('d2Msg').textContent = 'ยังไม่ได้บันทึก: '+e.message; }); };
+  [].forEach.call(L.querySelectorAll('[data-ne]'), function(b){ b.onclick = function(){
+    var c = b.closest('.card'), n = notes.filter(function(x){ return x.id === b.dataset.ne; })[0];
+    c.querySelector('.cmt').outerHTML = '<div class="nedit"><textarea maxlength="1000" aria-label="แก้ความเห็น" style="width:100%;min-height:70px">'+esc(n.text)+'</textarea><div style="text-align:right;margin-top:6px"><button type="button" class="sm" data-nc>ยกเลิก</button> <button type="button" class="sm pri" data-ns>บันทึกที่แก้</button></div></div>';
+    b.parentNode.style.visibility = 'hidden'; var ta = c.querySelector('textarea'); ta.focus();
+    c.querySelector('[data-nc]').onclick = function(){ notesList(id, notes); };
+    c.querySelector('[data-ns]').onclick = function(){ var t = ta.value.trim(); if (t.length < 2){ $('d2Msg').textContent = 'กรุณาพิมพ์ความเห็น (ถ้าจะลบ ให้กดปุ่มลบ)'; return; }
+      if (t === n.text) { notesList(id, notes); return; } call({ noteId:n.id, text:t }, this); };
+  }; });
+  [].forEach.call(L.querySelectorAll('[data-nd]'), function(b){ b.onclick = function(){
+    if (!b.dataset.sure){ b.dataset.sure = '1'; b.textContent = 'ยืนยันลบ'; b.classList.add('danger'); setTimeout(function(){ if (b.isConnected){ delete b.dataset.sure; b.textContent = 'ลบ'; b.classList.remove('danger'); } }, 4000); return; }
+    call({ noteId:b.dataset.nd, del:true }, b); }; });
+}
 function openNotes(id){
   var s = OV.students.filter(function(x){ return x.id === id; })[0], req = rid();
   dlg2('ความเห็นเพิ่มเติม · '+s.name, '<div id="d2List" class="hint">กำลังโหลด...</div>'+fld('d2Text','เพิ่มความเห็นใหม่ (ห้ามใส่ข้อมูลสุขภาพ/การวินิจฉัย)','<textarea id="d2Text" maxlength="1000"></textarea>'), 'บันทึกความเห็น', function(){
     var t = $('d2Text').value.trim(); if (t.length < 2) return Promise.reject(new Error('กรุณาพิมพ์ความเห็น'));
-    return api('adm_note_add', { id:id, text:t, reqId:req }).then(function(r){ var n = r.notes; OV.notes[id] = n.length ? { n:n.length, latest:{ at:n[0].at, by:n[0].by, text:n[0].text.slice(0,160) } } : null; toast(r.message); ovRows(); }); });
-  api('adm_notes', { id:id }).then(function(r){ if (!$('d2List')) return; $('d2List').className = ''; $('d2List').innerHTML = r.notes.length ? '<div class="nlist">'+r.notes.map(function(n){ return '<div class="card"><div class="hint">'+thd(n.at)+' · '+esc(n.by)+'</div><div class="cmt">'+esc(n.text)+'</div></div>'; }).join('')+'</div>' : '<div class="hint">ยังไม่มีความเห็น</div>'; })
+    return api('adm_note_add', { id:id, text:t, reqId:req }).then(function(r){ noteSync(id, r.notes); toast(r.message); }); });
+  api('adm_notes', { id:id }).then(function(r){ notesList(id, r.notes); })
     .catch(function(e){ if ($('d2List')) $('d2List').textContent = e.message; });
 }
 function openRoundNote(id){
